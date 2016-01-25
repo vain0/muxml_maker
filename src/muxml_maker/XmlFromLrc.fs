@@ -1,15 +1,38 @@
 ﻿namespace Muxml
 
+open System.Text
+
 module Converter =
+  open Converter
+
   module XmlFromLrc =
-    type Info = { Name: string }
+    let xml_from_lyrics = function
+      | WithInterval ls ->
+          let len         = ls |> List.length
+          let sh_words    = StringBuilder()
+          let in_words    = StringBuilder()
+          let intervals   = StringBuilder()
+
+          for (line_opt, Interval interval) in ls do
+            let line =
+                match line_opt with
+                | Some line -> line
+                | None -> LyricsLine.Empty
+
+            sh_words .AppendLine(sprintf "<word>%s</word>" (line.Show)) |> ignore
+            in_words .AppendLine(sprintf "<nihongoword>%s</nihongoword>" (line.Input)) |> ignore
+            intervals.AppendLine(sprintf "<interval>%d</interval>\n" (interval)) |> ignore
+
+          (string sh_words) + (string in_words) + (string intervals)
+      | _ ->
+          failwith "Unimplemented"
 
     ()
 
   open XmlFromLrc
 
-  let xml_from_lrc (info: Info) =
-    let lyrics = ""
+  let to_xml (data: MetaData) (lyrics: Lyrics) =
+    let lyrics_elems = lyrics |> xml_from_lyrics
 
     let kpm_elem =
         ""
@@ -26,7 +49,7 @@ module Converter =
     + "<musicXML>\n"
     + video_elem
     + pic_elem
-    + "<musicname>" + info.Name + "</musicname>\n"
-    + lyrics
+    + "<musicname>" + data.Name + "</musicname>\n"
+    + lyrics_elems
     + "</musicXML>\n"
     )
