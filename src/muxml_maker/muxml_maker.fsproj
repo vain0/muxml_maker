@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="Settings.fs" />
     <Compile Include="Dict.fs" />
+    <Compile Include="Converter.fs" />
     <Compile Include="XmlFromLrc.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
