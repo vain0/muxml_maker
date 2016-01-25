@@ -1,4 +1,4 @@
-﻿module Dict
+﻿namespace Muxml
 
-
-
+module Dict =
+  ()
