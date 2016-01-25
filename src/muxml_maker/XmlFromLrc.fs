@@ -23,7 +23,10 @@ module Converter =
             in_words .AppendLine(sprintf "<nihongoword>%s</nihongoword>" (line.Input)) |> ignore
             intervals.AppendLine(sprintf "<interval>%d</interval>\n" (interval)) |> ignore
 
-          (string sh_words) + (string in_words) + (string intervals)
+          ("<saidaimondaisuu>" + (string len) + "</saidaimondaisuu>")
+          + (string sh_words)
+          + (string in_words)
+          + (string intervals)
       | _ ->
           failwith "Unimplemented"
 
@@ -39,11 +42,16 @@ module Converter =
         //"<kpm>" + ModelKPM.ToString("f2") + "</kpm>"
 
     let video_elem =
-        ""
-        //(Video.Uses ? "<video src=\"" + Video.GetFullPath() + "\" scalemode=\"fullwidth\" />\n" : "")
+        match data.VideoPath with
+        | Some path ->
+            "<video src=\"" + path + "\" scalemode=\"fullwidth\" />\n"
+        | None -> ""
 
     let pic_elem =
-        ""//(Pic.Uses   ? "<background id=\"" + Pic.GetFullPath() + "\" />\n" : "")
+        match data.PicsPath with
+        | Some path ->
+            "<background id=\"" + path + "\" />\n"
+        | None -> ""
 
     ( "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n"
     + "<musicXML>\n"
