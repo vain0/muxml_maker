@@ -45,7 +45,15 @@ module Lyrics =
   let to_interval = function
     | WithInterval self -> self
     | WithTimeTag ttl ->
-        let (t, h) = margin_ratio
+        let divide_margin = 
+            let (t, h) = margin_ratio
+            let r = float t / float (t + h)
+            fun m ->
+                if m < margin_threshold then
+                  let t_margin = m |> float |> (*) r |> round |> int
+                  (t_margin, m - t_margin)
+                else (0, 0)
+
         [ for it in ttl |> with_prev_next_tags id do
             let (cur_line, TimeTag prev_time, TimeTag next_time) = it
             let (line, TimeTag l_tag, TimeTag r_tag) = cur_line
@@ -58,19 +66,8 @@ module Lyrics =
             if prev_margin >= margin_threshold
             then yield (None, Interval prev_margin)
 
-            let l_tag =
-                let h_margin =
-                    if prev_margin < margin_threshold
-                    then prev_margin - (prev_margin * h / (t + h))
-                    else 0
-                l_tag + h_margin
-
-            let r_tag =
-                let t_margin =
-                    if next_margin < margin_threshold
-                    then next_margin * t / (t + h)
-                    else 0
-                r_tag + t_margin
+            let l_tag = l_tag - (prev_margin |> divide_margin |> snd)
+            let r_tag = r_tag + (next_margin |> divide_margin |> fst)
 
             yield (Some line, Interval (r_tag - l_tag))
           ]
