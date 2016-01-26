@@ -34,7 +34,8 @@ module Parser =
       match pr with
       | ParserResult.Success (xs, state, pos) ->
           try
-            MySuccess (try_complete_time_tags xs, run_state state)
+            let ttl = try_complete_time_tags xs
+            MySuccess (ttl |> WithTimeTag, run_state state)
           with
           | e -> MyFailure e.Message
       | ParserResult.Failure (msg, error, state) ->
