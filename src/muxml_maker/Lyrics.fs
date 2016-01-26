@@ -10,22 +10,16 @@ module Lyrics =
   let inline try_complete_time_tags (ottl: OptionallyTimeTaggedList<'a>): TimeTaggedList<'a> =
       assert (ottl |> List.isEmpty |> not)
 
-      // xs に、前後のタグの情報を付加したもの
-      let zipped =
-          let prev_r_tags =
-              (Some (TimeTag 0)) :: (ottl |> List.map (fun (_, _, r_tag) -> r_tag) |> List.dropLast)
+      // ottl に、前後のタグの情報を付加したもの
+      let ottlPrevNext =
+          let (_, _, end_r_tag) = ottl |> Seq.last // Use assumption
+          ottl
+          |> List.zipPrevNext
+            (Some (TimeTag 0)) (end_r_tag)
+            (fun (_, _, r_tag) -> r_tag)
+            (fun (_, l_tag, _) -> l_tag)
 
-          let next_l_tags =
-              match ottl |> List.tryLast with
-              | Some (_, _, end_r_tag) ->
-                  List.append
-                    (ottl |> List.tail |> List.map (fun (_, l_tag, _) -> l_tag))
-                    [end_r_tag]
-              | None -> []
-
-          List.zip3 ottl prev_r_tags next_l_tags
-
-      [ for ((line, l_tag_opt, r_tag_opt), prev_r_tag_opt, next_l_tag_opt) in zipped do
+      [ for ((line, l_tag_opt, r_tag_opt), prev_r_tag_opt, next_l_tag_opt) in ottlPrevNext do
           let l_tag =
             match (prev_r_tag_opt, l_tag_opt) with
             | _, Some tag
