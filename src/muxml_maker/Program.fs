@@ -11,9 +11,12 @@ module Program =
 
     match file_path |> Path.GetExtension with
     | ".lrc" ->
-        //let xml_text = xml_from_lyrics contents
-        //printfn "%s" xml_text
-        ()
+        match Parser.parse_full_lrc contents with
+        | Parser.MySuccess (lyr, meta) ->
+            let intervals = lyr |> Lyrics.to_interval |> WithInterval
+            let xml = to_xml meta intervals
+            printfn "%s" xml
+        | Parser.MyFailure err -> failwith err
     | ext ->
         failwithf "Unsupported extension: %s" ext
 
