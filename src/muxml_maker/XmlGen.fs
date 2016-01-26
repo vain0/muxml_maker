@@ -8,8 +8,7 @@ module XmlGen =
   // config
   let xml_offset = 200 // >= 0
 
-  let xml_from_lyrics = function
-    | WithInterval ls ->
+  let xml_from_lyrics (ls: IntervalList<_>) =
         let sh_words    = StringBuilder()
         let in_words    = StringBuilder()
         let intervals   = StringBuilder()
@@ -41,13 +40,13 @@ module XmlGen =
         + (string sh_words)
         + (string in_words)
         + (string intervals)
-    | _ ->
-        failwith "Unimplemented"
 
   let to_xml (data: MetaData) (lyrics: Lyrics) =
     let enclose_or_empty l r = function
       | Some s -> l + s + r
       | None -> ""
+
+    let lyrics = lyrics |> Lyrics.to_interval
 
     //let kpm_elem = "<kpm>" + ModelKPM.ToString("f2") + "</kpm>"
 
