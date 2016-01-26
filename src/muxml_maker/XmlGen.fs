@@ -42,7 +42,7 @@ module XmlGen =
         | None -> ""
 
     let pic_elem =
-        match data.PicsPath with
+        match data.PicPath with
         | Some path ->
             "<background id=\"" + path + "\" />\n"
         | None -> ""

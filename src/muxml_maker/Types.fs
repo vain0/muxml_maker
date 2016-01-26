@@ -38,8 +38,8 @@ module Types =
   type MetaData = {
       Name            : string
       MusicPath       : string
-      PicsPath        : string option
+      PicPath         : string option
       VideoPath       : string option
-      Artist          : string
-      Genre           : string
+      Artist          : string option
+      Genre           : string option
   }
