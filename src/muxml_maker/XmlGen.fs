@@ -5,12 +5,25 @@ open System.Text
 
 [<AutoOpen>]
 module XmlGen =
+  // config
+  let xml_offset = 200 // >= 0
+
   let xml_from_lyrics = function
     | WithInterval ls ->
-        let len         = ls |> List.length
         let sh_words    = StringBuilder()
         let in_words    = StringBuilder()
         let intervals   = StringBuilder()
+
+        // 先頭インターバルの挿入
+        assert (xml_offset >= 0)
+        let ls =
+            match ls with
+            | (None, Interval first_interval) :: ls_tail ->
+                (None, Interval (xml_offset + first_interval)) :: ls_tail
+            | (Some _, _) :: tail
+              when xml_offset > 0 ->
+                (None, Interval xml_offset) :: ls
+            | _ -> ls
 
         for (line_opt, Interval interval) in ls do
           let line =
@@ -21,6 +34,8 @@ module XmlGen =
           sh_words .AppendLine(sprintf "<word>%s</word>" (line.Show)) |> ignore
           in_words .AppendLine(sprintf "<nihongoword>%s</nihongoword>" (line.Input)) |> ignore
           intervals.AppendLine(sprintf "<interval>%d</interval>" (interval)) |> ignore
+
+        let len = ls |> List.length
 
         ("<saidaimondaisuu>" + (string len) + "</saidaimondaisuu>" + Environment.NewLine)
         + (string sh_words)
