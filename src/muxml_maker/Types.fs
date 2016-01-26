@@ -11,6 +11,11 @@ module Types =
   with
     static member Empty =
         { Show = "@"; Input = "@" }
+    
+    override this.ToString() =
+        if this = LyricsLine.Empty
+        then "@"
+        else sprintf "%s[%s]" (this.Show) (this.Input)
 
   type TimeTag =
     | TimeTag of int
