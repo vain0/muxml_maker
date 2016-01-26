@@ -30,8 +30,8 @@ module XmlGen =
               | Some line -> line
               | None -> LyricsLine.Empty
 
-          sh_words .AppendLine(sprintf "<word>%s</word>" (line.Show)) |> ignore
-          in_words .AppendLine(sprintf "<nihongoword>%s</nihongoword>" (line.Input)) |> ignore
+          sh_words .AppendLine(sprintf "<nihongoword>%s</nihongoword>" (line.Show)) |> ignore
+          in_words .AppendLine(sprintf "<word>%s</word>" (line.Input)) |> ignore
           intervals.AppendLine(sprintf "<interval>%d</interval>" (interval)) |> ignore
 
         let len = ls |> List.length
