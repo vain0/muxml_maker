@@ -1,5 +1,6 @@
 ﻿namespace Muxml
 
+open System
 open System.Text
 
 [<AutoOpen>]
@@ -19,9 +20,9 @@ module XmlGen =
 
           sh_words .AppendLine(sprintf "<word>%s</word>" (line.Show)) |> ignore
           in_words .AppendLine(sprintf "<nihongoword>%s</nihongoword>" (line.Input)) |> ignore
-          intervals.AppendLine(sprintf "<interval>%d</interval>\n" (interval)) |> ignore
+          intervals.AppendLine(sprintf "<interval>%d</interval>" (interval)) |> ignore
 
-        ("<saidaimondaisuu>" + (string len) + "</saidaimondaisuu>")
+        ("<saidaimondaisuu>" + (string len) + "</saidaimondaisuu>" + Environment.NewLine)
         + (string sh_words)
         + (string in_words)
         + (string intervals)
