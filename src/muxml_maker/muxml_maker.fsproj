@@ -56,11 +56,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Util.fs" />
+    <Compile Include="Types.fs" />
     <Compile Include="Settings.fs" />
     <Compile Include="Dict.fs" />
-    <Compile Include="Converter.fs" />
-    <Compile Include="Parser.fs" />
-    <Compile Include="XmlFromLrc.fs" />
+    <Compile Include="Lyrics.fs" />
+    <Compile Include="XmlGen.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
     <None Include="packages.config" />
