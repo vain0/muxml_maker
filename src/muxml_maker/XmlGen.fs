@@ -45,29 +45,19 @@ module XmlGen =
         failwith "Unimplemented"
 
   let to_xml (data: MetaData) (lyrics: Lyrics) =
-    let lyrics_elems = lyrics |> xml_from_lyrics
+    let enclose_or_empty l r = function
+      | Some s -> l + s + r
+      | None -> ""
 
-    let kpm_elem =
-        ""
-        //"<kpm>" + ModelKPM.ToString("f2") + "</kpm>"
-
-    let video_elem =
-        match data.VideoPath with
-        | Some path ->
-            "<video src=\"" + path + "\" scalemode=\"fullwidth\" />\n"
-        | None -> ""
-
-    let pic_elem =
-        match data.PicPath with
-        | Some path ->
-            "<background id=\"" + path + "\" />\n"
-        | None -> ""
+    //let kpm_elem = "<kpm>" + ModelKPM.ToString("f2") + "</kpm>"
 
     ( "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n"
     + "<musicXML>\n"
-    + video_elem
-    + pic_elem
     + "<musicname>" + data.Name + "</musicname>\n"
-    + lyrics_elems
+    + (data.VideoPath |> enclose_or_empty "<video src=\"" "\" scalemode=\"fullwidth\" />\n")
+    + (data.PicPath   |> enclose_or_empty "<background id=\"" "\" />\n")
+    + (data.Artist    |> enclose_or_empty "<argist>" "</artist>\n")
+    + (data.Genre     |> enclose_or_empty "<genre>"  "</genre>\n")
+    + (lyrics         |> xml_from_lyrics)
     + "</musicXML>\n"
     )
