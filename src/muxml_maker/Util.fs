@@ -6,3 +6,7 @@ module List =
     | [] -> None
     | [x] -> Some x
     | x :: xs -> tryLast xs
+
+  let rec dropLast = function
+    | [] | [_] -> []
+    | x :: xs -> x :: dropLast xs
