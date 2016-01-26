@@ -2,7 +2,6 @@
 
 open System
 open System.IO
-open Converter
 
 module Program =
 
@@ -12,8 +11,9 @@ module Program =
 
     match file_path |> Path.GetExtension with
     | ".lrc" ->
-        let xml_text = Converter.xml_from_lrc contents
-        printfn "%s" xml_text
+        //let xml_text = xml_from_lyrics contents
+        //printfn "%s" xml_text
+        ()
     | ext ->
         failwithf "Unsupported extension: %s" ext
 

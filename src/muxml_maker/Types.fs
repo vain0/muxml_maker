@@ -1,6 +1,7 @@
 ﻿namespace Muxml
 
-module Converter =
+[<AutoOpen>]
+module Types =
   type LyricsLine = {
       // 表示歌詞
       Show:  string
@@ -24,7 +25,6 @@ module Converter =
       ('a * Interval) list
 
   type LyricsRepr<'a> =
-    private
     | WithTimeTag     of TimeTaggedList<'a>
     | WithInterval    of IntervalList<'a option>
 
