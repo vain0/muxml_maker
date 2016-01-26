@@ -18,6 +18,9 @@ module Types =
   type Interval =
     | Interval of int
 
+  type OptionallyTimeTaggedList<'a> =
+      ('a * TimeTag option * TimeTag option) list
+
   type TimeTaggedList<'a> =
       ('a * TimeTag * TimeTag) list
 
