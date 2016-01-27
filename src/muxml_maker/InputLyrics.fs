@@ -117,7 +117,8 @@ Commands:
               // TODO: メタデータを付加すべき
               let sb = StringBuilder()
               for (line, l_tag, r_tag) in lyr do
-                  sb.AppendLine(line.Show) |> ignore
+                  sb.AppendLine(sprintf "%s%s%s" (string l_tag) line.Show (string r_tag))
+                    .AppendLine(line.Input) |> ignore
               printfn "%s" (string sb)
 
       | Parser.MyFailure msg -> failwith msg
