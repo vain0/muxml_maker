@@ -38,6 +38,9 @@ Commands:
         if 0 <= new_index && new_index < len_
         then index_ <- new_index
 
+    static member move_to_if_able new_index (this: Reader) =
+        this.MoveToIfAble(new_index)
+
     static member try_build (this: Reader) =
         Option.if' (this.Inputs |> Array.forall (Option.isSome)) (fun () ->
           (this.Lyrics, (this.Inputs |> List.ofArray))
