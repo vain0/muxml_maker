@@ -6,47 +6,6 @@ open System.IO
 open Basis.Core
 
 module InputLyrics =
-  type State = {
-      Lyrics          : TimeTaggedList<string>
-      Shows           : string []
-      Inputs          : string option []
-      mutable Index   : int
-  }
-  with
-    static member Empty (lyr: TimeTaggedList<string>) =
-        let shows =
-            lyr |> List.map (fun (show, _, _) -> show) |> Array.ofList
-        {
-          Lyrics    = lyr
-          Shows     = shows
-          Inputs    = Array.create (shows.Length) None
-          Index     = 0
-        }
-
-    member this.MovePrevIfAble() =
-        if this.Index > 0
-        then this.Index <- this.Index - 1
-
-    member this.MoveNextIfAble() =
-        if this.Index < (this.Inputs.Length - 1)
-        then this.Index <- this.Index + 1
-
-    member this.IsAtLast =
-        this.Index = this.Inputs.Length - 1
-
-    member this.IsComplete =
-        this.Inputs |> Array.forall (Option.isSome)
-
-    static member try_build (this: State) =
-        Option.if' (this.IsComplete) (fun () ->
-          (this.Lyrics, (this.Inputs |> List.ofArray))
-          ||> List.zip
-          |> List.map (fun ((show, l, r), input) ->
-              assert (input |> Option.isSome)
-              ({ Show = show; Input = input |> Option.get }, l, r)
-              )
-          )
-
   let show_usage () =
       printfn """
 Input how to type for each line.
@@ -57,51 +16,93 @@ Commands:
   :j  Skip to the next line
 """
 
-  let proc_command c (state: State) kont =
-      match c with
-      | 'k' ->
-          state.MovePrevIfAble()
-          state |> kont
-      | 'j' ->
-          state.MoveNextIfAble()
-          state |> kont
-      | 'q' ->
-          printfn "Quit? (Y/n)"
-          if Console.ReadLine() = "Y"
-          then state
-          else state |> kont
-      | '?' | _ -> 
-          show_usage ()
-          state |> kont
+  type Reader (lyr_: TimeTaggedList<string>) =
+      let shows_ =
+          lyr_ |> List.map (fun (show, _, _) -> show) |> Array.ofList
 
-  let rec ask state =
-      printfn "#%3d %s" (state.Index) (state.Shows.[state.Index])
+      let len_ = shows_.Length
 
-      state.Inputs.[state.Index]
-      |> Option.iter (fun s -> printfn "#CUR %s" s)
+      let inputs_ =
+          Array.create len_ None
 
-      let line =
-          Console.ReadLine()
-          |> (fun s -> if s |> Str.isNullOrEmpty || s = ":" then ":?" else s)
+      let mutable index_ = 0
 
-      if line.[0] = ':'
-      then (state, ask) ||> proc_command (line.[1])
-      else
-        state.Inputs.[state.Index] <- Some line
-        if state.IsAtLast
-        then
-            // TODO: 未入力のものがあれば戻って聞き直す
-            // TODO: 一覧を出力して、本当に完了するか聞く
-            state
-        else
-            state.MoveNextIfAble()
-            state |> ask
+  with
+    member this.Lyrics  = lyr_
+    member this.Shows   = shows_
+    member this.Inputs  = inputs_
+    member this.Index   = index_
+    member this.Length  = len_
 
-  let ask_all lyr =
-      show_usage ()
-      State.Empty lyr
-      |> ask
-      |> State.try_build
+    member this.MoveToIfAble(new_index) =
+        if 0 <= new_index && new_index < len_
+        then index_ <- new_index
+
+    static member try_build (this: Reader) =
+        Option.if' (this.Inputs |> Array.forall (Option.isSome)) (fun () ->
+          (this.Lyrics, (this.Inputs |> List.ofArray))
+          ||> List.zip
+          |> List.map (fun ((show, l, r), input) ->
+              assert (input |> Option.isSome)
+              ({ Show = show; Input = input |> Option.get }, l, r)
+              )
+          )
+
+    static member proc_command ch (this: Reader) =
+        match ch with
+        | 'k' ->
+            this.MoveToIfAble (this.Index - 1)
+            true
+        | 'j' ->
+            this.MoveToIfAble (this.Index + 1)
+            true
+        | 'q' ->
+            printfn "Quit? (Y/n)"
+            Console.ReadLine() <> "Y"
+        | '?' | _ -> 
+            show_usage ()
+            true
+
+    static member show_current_line (this: Reader) =
+        printfn "#%3d %s" (this.Index) (this.Shows.[this.Index])
+
+        this.Inputs.[this.Index]
+        |> Option.iter (fun s -> printfn "#CUR %s" s)
+
+    static member read_all (this: Reader) =
+        let (|Command|Input|) line =
+            if line |> Str.isNullOrEmpty || line = ":" then
+              Command '?'
+            else if line.[0] = ':' then
+              Command line.[1]
+            else
+              Input line
+
+        let rec loop () =
+            this |> Reader.show_current_line
+
+            match Console.ReadLine() with
+            | Command ch ->
+                if this |> Reader.proc_command ch
+                then loop ()
+
+            | Input line ->
+                this.Inputs.[this.Index] <- Some line
+                if this.Index < this.Length - 1
+                then
+                  this.MoveToIfAble (this.Index + 1)
+                  loop ()
+                else
+                  // TODO: 未入力のものがあれば戻って聞き直す
+                  // TODO: 一覧を出力して、本当に完了するか聞く
+                  // 入力終了
+                  ()
+        loop ()
+
+    member this.Run() =
+        show_usage ()
+        this |> Reader.read_all
+        this |> Reader.try_build
 
   let from_file path =
       assert (path |> Path.GetExtension = ".lrc")
@@ -110,7 +111,8 @@ Commands:
 
       match contents |> Parser.parse_half_lrc with
       | Parser.MySuccess (lyr, _) ->
-          match lyr |> Lyrics.to_time_tagged |> ask_all with
+          let reader = Reader(lyr |> Lyrics.to_time_tagged)
+          match reader.Run() with
           | None ->
               failwith "Incomplete"
           | Some lyr ->
