@@ -30,7 +30,7 @@ module Program =
             | [] -> Console.In.ReadToEnd()
             | file_path :: _ ->
                 File.ReadAllText(file_path)
-        InputLyrics.run content
+        printf "%s" (InputLyrics.run content)
     | [input_file_path] ->
         dispatch input_file_path
     | _ ->
