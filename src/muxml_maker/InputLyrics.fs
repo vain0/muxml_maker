@@ -116,7 +116,7 @@ module InputLyrics =
                 Func = (fun (this: Reader) -> this.MoveToIfAble(this.Index - 1); true)
                 }
               { Char = 'j'
-                Manu = "Skip to the next line"
+                Manu = "Skip to next line"
                 Func = (fun (this: Reader) -> this.MoveToIfAble(this.Index + 1); true)
                 }
               { Char = 'b'
