@@ -6,15 +6,35 @@ open System.IO
 open Basis.Core
 
 module InputLyrics =
-  let show_usage () =
-      printfn """
-Input how to type for each line.
-Commands:
-  :?  Show this
-  :q  Quit (No save)
-  :k  Back to the previous line
-  :j  Skip to the next line
-"""
+  type Command<'a> = {
+      Char      : char
+      Manu      : string
+      Func      : 'a -> bool
+  }
+  with
+    override this.ToString() =
+        sprintf ":%c %s"
+          (this.Char) (this.Manu)
+
+  type CommandSet<'a> = {
+      Description   : string
+      CommandMap    : Map<char, Command<'a>>
+  }
+  with
+    member this.Usage() =
+        let commands =
+            this.CommandMap
+            |> Map.toList
+            |> List.map (fun (ch, cmd) -> "  " + string cmd)
+
+        [this.Description; "Commands:"] @ commands
+        |> Str.join (Environment.NewLine)
+
+    member this.Trigger(ch) =
+        this.CommandMap
+        |> Map.tryFind ch
+        |> Option.getOr (this.CommandMap |> Map.find '?')
+        |> (fun cmd -> cmd.Func)
 
   type Reader (lyr_: TimeTaggedList<string>) =
       let shows_ =
@@ -51,20 +71,39 @@ Commands:
               )
           )
 
-    static member proc_command ch (this: Reader) =
-        match ch with
-        | 'k' ->
-            this.MoveToIfAble (this.Index - 1)
-            true
-        | 'j' ->
-            this.MoveToIfAble (this.Index + 1)
-            true
-        | 'q' ->
-            printfn "Quit? (Y/n)"
-            Console.ReadLine() <> "Y"
-        | '?' | _ -> 
-            show_usage ()
-            true
+    static member command_map =
+        {
+          Description = "Input how to type for each line."
+          CommandMap =
+            [ { Char = '?'
+                Manu = "Show this usage"
+                Func = (fun _ -> printfn "%s" (Reader.command_map.Usage()); true)
+                }
+              { Char = 'q'
+                Manu = "Quit (no save)"
+                Func = (fun _ ->
+                    printfn "Quit? (Y/n)"
+                    Console.ReadLine() <> "Y"
+                    )
+                }
+              { Char = 'k'
+                Manu = "Back to previous line"
+                Func = (fun (this: Reader) -> this.MoveToIfAble(this.Index - 1); true)
+                }
+              { Char = 'j'
+                Manu = "Skip to the next line"
+                Func = (fun (this: Reader) -> this.MoveToIfAble(this.Index + 1); true)
+                }
+            ]
+            |> List.map (fun cmd -> (cmd.Char, cmd))
+            |> Map.ofList
+        }
+
+    static member show_usage() =
+        printfn "%s" (Reader.command_map.Usage())
+
+    static member proc_command ch this =
+        this |> Reader.command_map.Trigger(ch)
 
     static member show_current_line (this: Reader) =
         printfn "#%3d %s" (this.Index) (this.Shows.[this.Index])
@@ -103,7 +142,7 @@ Commands:
         loop ()
 
     member this.Run() =
-        show_usage ()
+        Reader.show_usage()
         this |> Reader.read_all
         this |> Reader.try_build
 
