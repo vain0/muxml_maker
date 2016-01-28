@@ -180,10 +180,11 @@ module InputLyrics =
                   this.MoveToIfAble (this.Index + 1)
                   loop ()
                 else
-                  // TODO: 未入力のものがあれば戻って聞き直す
-                  // TODO: 一覧を出力して、本当に完了するか聞く
-                  // 入力終了
-                  ()
+                  if this |> Reader.try_move_to_unreadable_line [0..(this.Length - 1)]
+                  then loop ()
+                  else
+                    // TODO: 一覧を出力して、本当に完了するか聞く
+                    () // 入力終了
         loop ()
 
     member this.Run() =
