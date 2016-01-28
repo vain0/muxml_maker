@@ -146,11 +146,7 @@ module InputLyrics =
         this |> Reader.read_all
         this |> Reader.try_build
 
-  let from_file path =
-      assert (path |> Path.GetExtension = ".lrc")
-      let contents =
-          File.ReadAllText(path)
-
+  let run contents =
       match contents |> Parser.parse_half_lrc with
       | Parser.MySuccess (lyr, _) ->
           let reader = Reader(lyr |> Lyrics.to_time_tagged)

@@ -24,11 +24,10 @@ module Program =
     match argv |> List.ofArray with
     | [] ->
         Console.ReadLine().Split([|' '|]) |> main_impl
+    | ["input"] ->
+        InputLyrics.run (Console.In.ReadToEnd ())
     | [input_file_path] ->
         dispatch input_file_path
-    | ["--input"; input_file_path]
-    | ["-i";      input_file_path] ->
-        InputLyrics.from_file input_file_path
     | _ ->
         failwith "Unknown command line"
 
