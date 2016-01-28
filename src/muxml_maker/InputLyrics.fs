@@ -63,13 +63,27 @@ module InputLyrics =
 
     static member try_build (this: Reader) =
         Option.if' (this.Inputs |> Array.forall (Option.isSome)) (fun () ->
-          (this.Lyrics, (this.Inputs |> List.ofArray))
-          ||> List.zip
-          |> List.map (fun ((show, l, r), input) ->
+          (this.Lyrics, (this.Shows |> List.ofArray), (this.Inputs |> List.ofArray))
+          |||> List.zip3
+          |> List.map (fun ((_, l, r), show, input) ->
               assert (input |> Option.isSome)
               ({ Show = show; Input = input |> Option.get }, l, r)
               )
           )
+
+    static member edit_current_line (this: Reader) =
+        let (orig, _, _) = this.Lyrics.[this.Index]
+        printfn "%s" "Input new line. (Empty or \"@\" to pass)"
+        printfn "#%3d %s" (this.Index) orig
+
+        let cur = &(this.Shows.[this.Index])
+        if cur <> orig
+        then printfn "#CUR %s" cur
+
+        match Console.ReadLine() with
+        | null | "" | "@" -> ()
+        | show -> cur <- show
+        true
 
     static member command_map =
         {
@@ -93,6 +107,10 @@ module InputLyrics =
               { Char = 'j'
                 Manu = "Skip to the next line"
                 Func = (fun (this: Reader) -> this.MoveToIfAble(this.Index + 1); true)
+                }
+              { Char = 'n'
+                Manu = "Edit current line"
+                Func = Reader.edit_current_line
                 }
             ]
             |> List.map (fun cmd -> (cmd.Char, cmd))
