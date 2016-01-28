@@ -61,6 +61,17 @@ module InputLyrics =
     static member move_to_if_able new_index (this: Reader) =
         this.MoveToIfAble(new_index)
 
+    static member try_move_to_unreadable_line ixs (this: Reader) =
+        ixs
+        |> Seq.tryFind (fun i ->
+            0 <= i && i < this.Length
+            && this.Inputs.[i] = None
+            )
+        |> (function
+            | Some i -> this.MoveToIfAble(i); true
+            | None -> false
+            )
+
     static member try_build (this: Reader) =
         Option.if' (this.Inputs |> Array.forall (Option.isSome)) (fun () ->
           (this.Lyrics, (this.Shows |> List.ofArray), (this.Inputs |> List.ofArray))
@@ -107,6 +118,22 @@ module InputLyrics =
               { Char = 'j'
                 Manu = "Skip to the next line"
                 Func = (fun (this: Reader) -> this.MoveToIfAble(this.Index + 1); true)
+                }
+              { Char = 'b'
+                Manu = "Back to previous unreadable line"
+                Func = (fun (this: Reader) ->
+                    let ixs = [(this.Index - 1) .. -1 .. 0]
+                    if this |> Reader.try_move_to_unreadable_line ixs |> not
+                    then printfn "%s" "Not found."
+                    true)
+                }
+              { Char = 'f'
+                Manu = "Skip to next unreadable line"
+                Func = (fun (this: Reader) ->
+                    let ixs = [(this.Index + 1) .. (this.Length - 1)]
+                    if this |> Reader.try_move_to_unreadable_line ixs |> not
+                    then printfn "%s" "Not found."
+                    true)
                 }
               { Char = 'n'
                 Manu = "Edit current line"
