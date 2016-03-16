@@ -71,3 +71,8 @@ module Lyrics =
 
             yield (Some line, Interval (r_tag - l_tag))
           ]
+
+  let to_time_tagged = function
+    | WithTimeTag ttl -> ttl
+    | WithInterval self ->
+        failwith "Unimplemented"

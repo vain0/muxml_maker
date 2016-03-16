@@ -19,6 +19,15 @@ module Types =
 
   type TimeTag =
     | TimeTag of int
+  with
+    override this.ToString() =
+        let (TimeTag ms) = this
+        let min   = ms / (60 * 1000)
+        let ms    = ms % (60 * 1000)
+        let sec   = ms / 1000
+        let ms    = ms % 1000
+        let ms10  = ms / 10
+        sprintf "[%02d:%02d:%02d]" min sec ms10
 
   type Interval =
     | Interval of int
@@ -35,6 +44,11 @@ module Types =
   type LyricsRepr<'a> =
     | WithTimeTag     of TimeTaggedList<'a>
     | WithInterval    of IntervalList<'a option>
+  with
+      member this.Shows() =
+          match this with
+          | WithTimeTag  xs -> xs |> List.map (fun (show, _, _) -> show)
+          | WithInterval xs -> xs |> List.choose fst
 
   // 入力歌詞が未設定な歌詞データ
   type UnreadableLyrics =

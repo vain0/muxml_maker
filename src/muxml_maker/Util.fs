@@ -1,6 +1,19 @@
 ﻿[<AutoOpen>]
 module Util
 
+[<AutoOpen>]
+module Trivial =
+  let tap f x =
+      do f x
+      x
+
+module Option =
+  let if' b f =
+      if b then Some (f ()) else None
+
+  let filter pred self =
+      self |> Option.bind (fun it -> if' (pred it) (fun () -> it))
+
 module List =
   // not used
   let rec tryLast = function

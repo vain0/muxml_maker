@@ -20,16 +20,26 @@ module Program =
     | ext ->
         failwithf "Unsupported extension: %s" ext
 
+  let rec main_impl argv =
+    match argv |> List.ofArray with
+    | [] ->
+        Console.ReadLine().Split([|' '|]) |> main_impl
+    | "input" :: argv ->
+        let content =
+            match argv with
+            | [] -> Console.In.ReadToEnd()
+            | file_path :: _ ->
+                File.ReadAllText(file_path)
+        printf "%s" (InputLyrics.run content)
+    | [input_file_path] ->
+        dispatch input_file_path
+    | _ ->
+        failwith "Unknown command line"
+
   [<EntryPoint>]
-  let main argv = 
-    let input_file_path =
-        if argv.Length > 0
-        then argv.[0]
-        else
-          Console.ReadLine ()
-        
+  let main argv =
     try
-      dispatch input_file_path
+      main_impl argv
       0 // exit code
     with
     | e ->
