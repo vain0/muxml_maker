@@ -54,6 +54,7 @@ module XmlGen =
     ( "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n"
     + "<musicXML>\n"
     + "<musicname>" + data.Name + "</musicname>\n"
+    + (data.MusicPath |> sprintf "<music src=\"%s\" />")
     + (data.VideoPath |> enclose_or_empty "<video src=\"" "\" scalemode=\"fullwidth\" />\n")
     + (data.PicPath   |> enclose_or_empty "<background id=\"" "\" />\n")
     + (data.Artist    |> enclose_or_empty "<argist>" "</artist>\n")
@@ -62,7 +63,7 @@ module XmlGen =
     + "</musicXML>\n"
     )
 
-  let lyrics_from_xml (xml: XmlDocument): IntervalList<_> =
+  let lyrics_from_xml (xml: XmlNode): IntervalList<_> =
     let len     =
       xml.SelectSingleNode("saidaimondaisuu").InnerText
       |> int
@@ -87,6 +88,7 @@ module XmlGen =
 
   let try_parse_xml (xml: XmlDocument) =
     try
+      let xml = xml.SelectSingleNode("musicXML")
       let getTextElem tagName =
         let nodes = xml.SelectNodes(tagName)
         if nodes.Count = 0
