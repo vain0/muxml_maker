@@ -90,18 +90,16 @@ module XmlGen =
     try
       let xml = xml.SelectSingleNode("musicXML")
       let getTextElem tagName =
-        let nodes = xml.SelectNodes(tagName)
-        if nodes.Count = 0
-        then None
-        else nodes.[0].InnerText |> Some
+        xml
+        |> Xml.trySelectFirst tagName
+        |> Option.map (fun node -> node.InnerText)
       let getAttr tagName attrName =
-        let nodes = xml.SelectNodes(tagName)
-        if nodes.Count = 0
-        then None
-        else
-          let attrs = nodes.[0].Attributes
-          in
-            attrs.GetNamedItem(attrName).InnerText |> Some
+        xml
+        |> Xml.trySelectFirst tagName
+        |> Option.map (fun node ->
+            let attr = node.Attributes.GetNamedItem(attrName)
+            in attr.InnerText
+            )
 
       let lyrics =
         xml |> lyrics_from_xml |> Lyrics.WithInterval
