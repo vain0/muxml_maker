@@ -1,5 +1,7 @@
 ﻿namespace Muxml
 
+open System
+open Basis.Core
 open FParsec
 
 module Parser =
@@ -112,3 +114,37 @@ module Parser =
             (LrcParser.p_full_lrc) (LrcParser.init_state)
             "lrc-full parser" (contents + "\n")
       result |> LrcParser.run_result
+
+  let lrc_meta_header (meta: MetaData) =
+    [
+      "@name=" + meta.Name        |> Some
+      "@music=" + meta.MusicPath  |> Some
+      meta.PicPath    |> Option.map ((+) "@pic=")
+      meta.VideoPath  |> Option.map ((+) "@video=")
+      meta.Artist     |> Option.map ((+) "@artist=")
+      meta.Genre      |> Option.map ((+) "@genre=")
+    ]
+    |> List.choose id
+    |> Str.join Environment.NewLine
+
+  let unparse_half_lrc meta (lrc: UnreadableLyrics) =
+      lrc
+      |> Lyrics.to_time_tagged
+      |> List.fold (fun acc (line, TimeTag l_tag, TimeTag r_tag) ->
+          (string l_tag + line + string r_tag) :: acc
+          ) []
+      |> List.rev
+      |> Str.join Environment.NewLine
+      |> (+) (lrc_meta_header meta)
+      
+  let unparse_full_lrc meta (lrc: Lyrics) =
+      lrc
+      |> Lyrics.to_time_tagged
+      |> List.fold (fun acc (line, l_tag, r_tag) ->
+          let { Show = show; Input = input } = line
+          in
+            input :: (string l_tag + show + string r_tag) :: acc
+          ) []
+      |> List.rev
+      |> Str.join Environment.NewLine
+      |> (+) (lrc_meta_header meta)

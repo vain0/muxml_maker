@@ -21,9 +21,12 @@ module Program =
         let xml =
           Xml.XmlDocument()
           |> tap (fun xml -> xml.LoadXml(contents))
-        let materials = try_parse_xml xml
         in
-          ()
+          match try_parse_xml xml with
+          | Some (meta, lrc) ->
+              printfn "%s"
+                (Parser.unparse_full_lrc meta lrc)
+          | None -> failwith "failed"
     | ext ->
         failwithf "Unsupported extension: %s" ext
 
