@@ -75,4 +75,15 @@ module Lyrics =
   let to_time_tagged = function
     | WithTimeTag ttl -> ttl
     | WithInterval self ->
-        failwith "Unimplemented"
+        self
+        |> List.fold (fun (acc, total) (line_opt, Interval interval) ->
+            let total' = total + interval
+            let acc' =
+              match line_opt with
+              | None -> acc  // not emit gap line
+              | Some line -> (line, TimeTag total, TimeTag total') :: acc
+            in
+              (acc', total')
+            ) ([], 0)
+        |> fst
+        |> List.rev
