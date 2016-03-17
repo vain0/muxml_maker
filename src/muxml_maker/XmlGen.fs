@@ -2,6 +2,7 @@
 
 open System
 open System.Text
+open System.Xml
 
 [<AutoOpen>]
 module XmlGen =
@@ -60,3 +61,58 @@ module XmlGen =
     + (lyrics         |> xml_from_lyrics)
     + "</musicXML>\n"
     )
+
+  let lyrics_from_xml (xml: XmlDocument): IntervalList<_> =
+    let len     =
+      xml.SelectSingleNode("saidaimondaisuu").InnerText
+      |> int
+    let sh_words    = xml.SelectNodes("nihongoword")
+    let in_words    = xml.SelectNodes("word")
+    let intervals   = xml.SelectNodes("interval")
+    in
+      [
+        for i in 0..(len - 1) do
+          let line =
+            {
+              Show    = sh_words.[i].InnerText
+              Input   = in_words.[i].InnerText
+            }
+          let interval =
+            intervals.[i].InnerText |> int |> Interval
+          yield
+            if line = LyricsLine.Empty
+            then (None, interval)
+            else (Some line, interval)
+        ]
+
+  let try_parse_xml (xml: XmlDocument) =
+    try
+      let getTextElem tagName =
+        let nodes = xml.SelectNodes(tagName)
+        if nodes.Count = 0
+        then None
+        else nodes.[0].InnerText |> Some
+      let getAttr tagName attrName =
+        let nodes = xml.SelectNodes(tagName)
+        if nodes.Count = 0
+        then None
+        else
+          let attrs = nodes.[0].Attributes
+          in
+            attrs.GetNamedItem(attrName).InnerText |> Some
+
+      let lyrics =
+        xml |> lyrics_from_xml |> Lyrics.WithInterval
+      let meta =
+        {
+          Name        = xml.SelectSingleNode("musicname").InnerText
+          MusicPath   = getAttr "music"       "src" |> Option.get
+          PicPath     = getAttr "background"  "id"
+          VideoPath   = getAttr "video"       "src"
+          Artist      = getTextElem "artist"
+          Genre       = getTextElem "genre"
+        }
+      in
+        (meta, lyrics) |> Some
+    with
+    | _ -> None

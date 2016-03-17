@@ -17,6 +17,13 @@ module Program =
             let xml = to_xml meta intervals
             printfn "%s" xml
         | Parser.MyFailure err -> failwith err
+    | ".xml" ->
+        let xml =
+          Xml.XmlDocument()
+          |> tap (fun xml -> xml.LoadXml(contents))
+        let materials = try_parse_xml xml
+        in
+          ()
     | ext ->
         failwithf "Unsupported extension: %s" ext
 
