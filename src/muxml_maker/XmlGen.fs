@@ -7,7 +7,9 @@ open System.Xml
 [<AutoOpen>]
 module XmlGen =
   // config
-  let xml_offset = 200 // >= 0
+  let xml_offset =
+    config.XmlOffset
+    |> tap (fun n -> assert (n >= 0))
 
   let xml_from_lyrics (ls: IntervalList<_>) =
         let sh_words    = StringBuilder()
