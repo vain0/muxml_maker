@@ -36,7 +36,7 @@ module Program =
                 File.ReadAllText(file_path)
         let (LyricsText lrc_text) =
           content
-          |> Lyrics.of_string<unit, unit>
+          |> Lyrics.of_string<unit>
           |> InputLyrics.run
         in
           printf "%s" lrc_text

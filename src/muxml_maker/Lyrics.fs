@@ -7,7 +7,7 @@ module Lyrics =
   let margin_ratio = (5, 1)
 
   /// Wrap lrc string in LyricsText
-  let of_string<'TInput, 'TTag> (content: string): LyricsText<'TInput, 'TTag> =
+  let of_string<'TInput> (content: string): LyricsText<'TInput> =
     LyricsText content
 
   // タイムタグつきリスト ttl の、各要素に前後のタグの時刻を付加したリスト

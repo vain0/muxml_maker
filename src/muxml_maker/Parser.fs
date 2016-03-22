@@ -106,12 +106,12 @@ module Parser =
         "lrc-half parser" (contents + "\n")
 
   /// .lrc (with time tags, w/o input lyrics)
-  let parse_half_lrc (LyricsText contents: LyricsText<unit, 'TTag>) =
+  let parse_half_lrc (LyricsText contents: LyricsText<unit>) =
       parse_half_lrc_impl contents
       |> LrcParser.run_result
 
   /// .lrc (with time tags and input lyrics)
-  let parse_full_lrc (LyricsText contents: LyricsText<string, 'TTag>) =
+  let parse_full_lrc (LyricsText contents: LyricsText<string>) =
       let result =
           runParserOnString
             (LrcParser.p_full_lrc) (LrcParser.init_state)
@@ -139,7 +139,7 @@ module Parser =
       |> List.rev
       |> Str.join Environment.NewLine
       |> (+) (unparse_lrc_meta_header meta)
-      |> Lyrics.of_string<unit, TimeTag>
+      |> Lyrics.of_string<unit>
 
   let unparse_full_lrc meta (lrc: Lyrics) =
       lrc
@@ -152,7 +152,7 @@ module Parser =
       |> List.rev
       |> Str.join Environment.NewLine
       |> (+) (unparse_lrc_meta_header meta)
-      |> Lyrics.of_string<string, TimeTag>
+      |> Lyrics.of_string<string>
 
 [<AutoOpen>]
 module LyricsExtension =
@@ -177,8 +177,8 @@ module LyricsExtension =
           |> flip (/) (ottl |> List.length |> (*) 2 |> float)
         in
           if prob > 0.7
-          then FullLyricsText (contents |> Lyrics.of_string<string, TimeTag>)
-          else HalfLyricsText (contents |> Lyrics.of_string<unit  , TimeTag>)
+          then FullLyricsText (contents |> Lyrics.of_string<string>)
+          else HalfLyricsText (contents |> Lyrics.of_string<unit  >)
 
     | Failure _ ->
         Invalid
