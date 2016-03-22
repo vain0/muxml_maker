@@ -115,7 +115,7 @@ module Parser =
             "lrc-full parser" (contents + "\n")
       result |> LrcParser.run_result
 
-  let lrc_meta_header (meta: MetaData) =
+  let unparse_lrc_meta_header (meta: MetaData) =
     [
       "@name=" + meta.Name        |> Some
       "@music=" + meta.MusicPath  |> Some
@@ -135,7 +135,7 @@ module Parser =
           ) []
       |> List.rev
       |> Str.join Environment.NewLine
-      |> (+) (lrc_meta_header meta)
+      |> (+) (unparse_lrc_meta_header meta)
       
   let unparse_full_lrc meta (lrc: Lyrics) =
       lrc
@@ -147,4 +147,4 @@ module Parser =
           ) []
       |> List.rev
       |> Str.join Environment.NewLine
-      |> (+) (lrc_meta_header meta)
+      |> (+) (unparse_lrc_meta_header meta)
