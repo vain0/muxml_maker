@@ -82,7 +82,7 @@ module XmlGen =
         | Parser.MyFailure err -> failwith err
         | Parser.MySuccess (lyr, meta) ->
             let intervals = lyr |> Lyrics.to_interval |> WithInterval
-            in to_xml meta intervals
+            in (to_xml meta intervals, meta)
 
     | Invalid -> failwith "Invalid lrc text."
 
@@ -148,5 +148,5 @@ module XmlGen =
       match xml |> try_parse_xml with
       | Some (meta, lrc) ->
           let (LyricsText lrc_text) = Parser.unparse_full_lrc meta lrc
-          in lrc_text
+          in (lrc_text, meta)
       | None -> failwith "failed"
