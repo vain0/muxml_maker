@@ -101,14 +101,14 @@ module Parser =
         .>> p_eof
         
   /// .lrc (with time tags, w/o input lyrics)
-  let parse_half_lrc contents =
+  let parse_half_lrc (LyricsText contents: LyricsText<unit, 'TTag>) =
       runParserOnString
         (LrcParser.p_half_lrc) (LrcParser.init_state)
         "lrc-half parser" (contents + "\n")
       |> LrcParser.run_result
 
   /// .lrc (with time tags and input lyrics)
-  let parse_full_lrc contents =
+  let parse_full_lrc (LyricsText contents: LyricsText<string, 'TTag>) =
       let result =
           runParserOnString
             (LrcParser.p_full_lrc) (LrcParser.init_state)
@@ -136,7 +136,8 @@ module Parser =
       |> List.rev
       |> Str.join Environment.NewLine
       |> (+) (unparse_lrc_meta_header meta)
-      
+      |> Lyrics.of_string<unit, TimeTag>
+
   let unparse_full_lrc meta (lrc: Lyrics) =
       lrc
       |> Lyrics.to_time_tagged
@@ -148,3 +149,4 @@ module Parser =
       |> List.rev
       |> Str.join Environment.NewLine
       |> (+) (unparse_lrc_meta_header meta)
+      |> Lyrics.of_string<string, TimeTag>

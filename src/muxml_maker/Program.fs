@@ -11,7 +11,11 @@ module Program =
 
     match file_path |> Path.GetExtension with
     | ".lrc" ->
-        match Parser.parse_full_lrc contents with
+        match
+          contents
+          |> Lyrics.of_string<string, TimeTag>
+          |> Parser.parse_full_lrc
+          with
         | Parser.MySuccess (lyr, meta) ->
             let intervals = lyr |> Lyrics.to_interval |> WithInterval
             let xml = to_xml meta intervals
@@ -24,8 +28,8 @@ module Program =
         in
           match try_parse_xml xml with
           | Some (meta, lrc) ->
-              printfn "%s"
-                (Parser.unparse_full_lrc meta lrc)
+              let (LyricsText lrc_text) = Parser.unparse_full_lrc meta lrc
+              printfn "%s" lrc_text
           | None -> failwith "failed"
     | ext ->
         failwithf "Unsupported extension: %s" ext
@@ -40,7 +44,12 @@ module Program =
             | [] -> Console.In.ReadToEnd()
             | file_path :: _ ->
                 File.ReadAllText(file_path)
-        printf "%s" (InputLyrics.run content)
+        let (LyricsText lrc_text) =
+          content
+          |> Lyrics.of_string<unit, unit>
+          |> InputLyrics.run
+        in
+          printf "%s" lrc_text
     | [input_file_path] ->
         dispatch input_file_path
     | _ ->

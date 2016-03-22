@@ -2,6 +2,9 @@
 
 [<AutoOpen>]
 module Types =
+  type LyricsText<'TInput, 'TTag> =
+    | LyricsText of string
+
   type LyricsLine = {
       // 表示歌詞
       Show:  string

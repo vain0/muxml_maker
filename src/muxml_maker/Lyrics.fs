@@ -6,6 +6,10 @@ module Lyrics =
   let margin_threshold = 300
   let margin_ratio = (5, 1)
 
+  /// Wrap lrc string in LyricsText
+  let of_string<'TInput, 'TTag> (content: string): LyricsText<'TInput, 'TTag> =
+    LyricsText content
+
   // タイムタグつきリスト ttl の、各要素に前後のタグの時刻を付加したリスト
   /// opt: Some or id
   let with_prev_next_tags opt ttl =
