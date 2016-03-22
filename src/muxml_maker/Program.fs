@@ -41,18 +41,6 @@ module Program =
     match argv |> List.ofArray with
     | [] ->
         Console.ReadLine().Split([|' '|]) |> main_impl
-    | "input" :: argv ->
-        let content =
-            match argv with
-            | [] -> Console.In.ReadToEnd()
-            | file_path :: _ ->
-                File.ReadAllText(file_path)
-        let (LyricsText lrc_text) =
-          content
-          |> Lyrics.of_string<unit>
-          |> InputLyrics.run
-        in
-          printf "%s" lrc_text
     | [input_file_path] ->
         dispatch input_file_path
     | _ ->
