@@ -1,6 +1,7 @@
 ﻿namespace Muxml
 
 open System
+open System.Security
 open System.Text
 open System.Xml
 
@@ -59,6 +60,14 @@ module XmlGen =
     + (data.Genre     |> enclose_or_empty "<genre>"  "</genre>\n")
     + (lyrics         |> xml_from_lyrics)
     + "</musicXML>\n"
+    )
+
+  let music_info_text_from_meta (meta: MetaData) =
+    ( "<musicinfo>\n"
+    + "  <musicname>" + SecurityElement.Escape(meta.Name) + "</musicname>\n"
+    + (meta.Artist  |> enclose_or_empty "  <artist>" "</artist>\n")
+    + (meta.Genre   |> enclose_or_empty "  <genre>"  "</genre>\n")
+    + "</musicinfo>\n"
     )
 
   let rec xml_text_from_lrc_text =
