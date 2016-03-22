@@ -6,8 +6,8 @@ open FParsec
 
 module Parser =
   type MyResult<'r, 'e> =
-      | MySuccess of 'r
-      | MyFailure of 'e
+    | MySuccess of 'r
+    | MyFailure of 'e
 
   module LrcParser =
     type LrcConfig = Map<string, string>
@@ -16,21 +16,21 @@ module Parser =
 
     let run_state cfg =
       let name =
-          match cfg |> Map.tryFind "name" with
-          | Some name -> name
-          | None -> ""
-
-      {
-        MetaData.Name = name
-        MusicPath   =
-          match cfg |> Map.tryFind "music" with
-          | Some path -> path
-          | None -> name + ".mp3"
-        PicPath     = cfg |> Map.tryFind "pic"
-        VideoPath   = cfg |> Map.tryFind "video"
-        Artist      = cfg |> Map.tryFind "artist"
-        Genre       = cfg |> Map.tryFind "genre"
-      }
+        match cfg |> Map.tryFind "name" with
+        | Some name -> name
+        | None -> ""
+      in
+        {
+          MetaData.Name = name
+          MusicPath   =
+            match cfg |> Map.tryFind "music" with
+            | Some path -> path
+            | None -> name + ".mp3"
+          PicPath     = cfg |> Map.tryFind "pic"
+          VideoPath   = cfg |> Map.tryFind "video"
+          Artist      = cfg |> Map.tryFind "artist"
+          Genre       = cfg |> Map.tryFind "genre"
+        }
 
     let inline run_result pr =
       match pr with
@@ -48,74 +48,77 @@ module Parser =
     let skip p = p >>% ()
     
     // ``@ key = value`` adds config to (key: value) pair
-    let p_meta_line: Parser<_> = parse {
+    let p_meta_line: Parser<_> =
+      parse {
         do! skipChar '@' .>> spaces
         let! key    = many1Chars asciiLetter
         do! spaces >>. skipChar '=' .>> spaces
         let! value  = restOfLine true
         do! updateUserState (Map.add key value)
-    }
+      }
 
     let p_newline: Parser<_> =
-        skipNewline >>. many (attempt p_meta_line <|> skipNewline)
+      skipNewline >>. many (attempt p_meta_line <|> skipNewline)
 
     let p_one_line =
-        restOfLine false .>> p_newline
+      restOfLine false .>> p_newline
 
     let p_time_tag: Parser<_> =
-        let body =
-          pipe3 (pint32 .>> skipChar ':') (pint32 .>> skipChar ':') pint32
-            (fun min sec ms10 -> TimeTag <| ((((min * 60) + sec) * 100) + ms10) * 10)
-
+      let body =
+        pipe3 (pint32 .>> skipChar ':') (pint32 .>> skipChar ':') pint32
+          (fun min sec ms10 -> TimeTag <| ((((min * 60) + sec) * 100) + ms10) * 10)
+      in
         between (skipChar '[') (skipChar ']') body
 
     let p_l_tag = opt (attempt p_time_tag)
     let p_r_tag = opt (attempt p_time_tag) .>> p_newline
 
-    let p_time_tagged_line = parse {
+    let p_time_tagged_line =
+      parse {
         let! l_tag = p_l_tag
         let! line  = manyCharsTill anyChar (followedBy (attempt (skip p_time_tag) <|> skipNewline))
         let! r_tag = p_r_tag
         return (line, l_tag, r_tag)
-    }
+      }
 
     let p_time_tagged_line_and_input_lyrics: Parser<_> =
-        pipe2
-          p_time_tagged_line
-          p_one_line
-          (fun (show, l_tag, r_tag) input ->
-              ({ Show = show; Input = input }, l_tag, r_tag)
-              )
+      pipe2
+        p_time_tagged_line
+        p_one_line
+        (fun (show, l_tag, r_tag) input ->
+            ({ Show = show; Input = input }, l_tag, r_tag)
+            )
 
     let p_eof =
-        spaces >>. eof
+      spaces >>. eof
 
     let p_half_lrc =
-        optional (attempt p_meta_line)
-        >>. many p_time_tagged_line
-        .>> p_eof
+      optional (attempt p_meta_line)
+      >>. many p_time_tagged_line
+      .>> p_eof
 
     let p_full_lrc =
-        optional (attempt p_meta_line)
-        >>. many p_time_tagged_line_and_input_lyrics
-        .>> p_eof
-        
+      optional (attempt p_meta_line)
+      >>. many p_time_tagged_line_and_input_lyrics
+      .>> p_eof
+
   let parse_half_lrc_impl contents =
-      runParserOnString
-        (LrcParser.p_half_lrc) (LrcParser.init_state)
-        "lrc-half parser" (contents + "\n")
+    runParserOnString
+      (LrcParser.p_half_lrc) (LrcParser.init_state)
+      "lrc-half parser" (contents + "\n")
 
   /// .lrc (with time tags, w/o input lyrics)
   let parse_half_lrc (LyricsText contents: LyricsText<unit>) =
-      parse_half_lrc_impl contents
-      |> LrcParser.run_result
+    parse_half_lrc_impl contents
+    |> LrcParser.run_result
 
   /// .lrc (with time tags and input lyrics)
   let parse_full_lrc (LyricsText contents: LyricsText<string>) =
-      let result =
-          runParserOnString
-            (LrcParser.p_full_lrc) (LrcParser.init_state)
-            "lrc-full parser" (contents + "\n")
+    let result =
+      runParserOnString
+        (LrcParser.p_full_lrc) (LrcParser.init_state)
+        "lrc-full parser" (contents + "\n")
+    in
       result |> LrcParser.run_result
 
   let unparse_lrc_meta_header (meta: MetaData) =
@@ -131,28 +134,28 @@ module Parser =
     |> Str.join Environment.NewLine
 
   let unparse_half_lrc meta (lrc: UnreadableLyrics) =
-      lrc
-      |> Lyrics.to_time_tagged
-      |> List.fold (fun acc (line, TimeTag l_tag, TimeTag r_tag) ->
-          (string l_tag + line + string r_tag) :: acc
-          ) []
-      |> List.rev
-      |> Str.join Environment.NewLine
-      |> (+) (unparse_lrc_meta_header meta)
-      |> Lyrics.of_string<unit>
+    lrc
+    |> Lyrics.to_time_tagged
+    |> List.fold (fun acc (line, TimeTag l_tag, TimeTag r_tag) ->
+        (string l_tag + line + string r_tag) :: acc
+        ) []
+    |> List.rev
+    |> Str.join Environment.NewLine
+    |> (+) (unparse_lrc_meta_header meta)
+    |> Lyrics.of_string<unit>
 
   let unparse_full_lrc meta (lrc: Lyrics) =
-      lrc
-      |> Lyrics.to_time_tagged
-      |> List.fold (fun acc (line, l_tag, r_tag) ->
-          let { Show = show; Input = input } = line
-          in
-            input :: (string l_tag + show + string r_tag) :: acc
-          ) []
-      |> List.rev
-      |> Str.join Environment.NewLine
-      |> (+) (unparse_lrc_meta_header meta)
-      |> Lyrics.of_string<string>
+    lrc
+    |> Lyrics.to_time_tagged
+    |> List.fold (fun acc (line, l_tag, r_tag) ->
+        let { Show = show; Input = input } = line
+        in
+          input :: (string l_tag + show + string r_tag) :: acc
+        ) []
+    |> List.rev
+    |> Str.join Environment.NewLine
+    |> (+) (unparse_lrc_meta_header meta)
+    |> Lyrics.of_string<string>
 
 [<AutoOpen>]
 module LyricsExtension =

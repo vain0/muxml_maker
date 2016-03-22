@@ -13,37 +13,42 @@ module XmlGen =
     |> tap (fun n -> assert (n >= 0))
 
   let xml_from_lyrics (ls: IntervalList<_>) =
-        let sh_words    = StringBuilder()
-        let in_words    = StringBuilder()
-        let intervals   = StringBuilder()
+    let sh_words    = StringBuilder()
+    let in_words    = StringBuilder()
+    let intervals   = StringBuilder()
 
-        // 先頭インターバルの挿入
-        assert (xml_offset >= 0)
-        let ls =
-            match ls with
-            | (None, Interval first_interval) :: ls_tail ->
-                (None, Interval (xml_offset + first_interval)) :: ls_tail
-            | (Some _, _) :: tail
-              when xml_offset > 0 ->
-                (None, Interval xml_offset) :: ls
-            | _ -> ls
+    // 先頭インターバルの挿入
+    assert (xml_offset >= 0)
+    let ls =
+      match ls with
+      | (None, Interval first_interval) :: ls_tail ->
+          (None, Interval (xml_offset + first_interval)) :: ls_tail
+      | (Some _, _) :: tail
+        when xml_offset > 0 ->
+          (None, Interval xml_offset) :: ls
+      | _ -> ls
 
-        for (line_opt, Interval interval) in ls do
-          let line =
-              match line_opt with
-              | Some line -> line
-              | None -> LyricsLine.Empty
+    for (line_opt, Interval interval) in ls do
+      let line =
+        match line_opt with
+        | Some line -> line
+        | None -> LyricsLine.Empty
+      let sh_words_fmt    = sprintf "<nihongoword>%s</nihongoword>"
+      let in_words_fmt    = sprintf "<word>%s</word>"
+      let intervals_fmt   = sprintf "<interval>%d</interval>" 
+      do
+        sh_words .AppendLine(sh_words_fmt  (line.Show )) |> ignore
+        in_words .AppendLine(in_words_fmt  (line.Input)) |> ignore
+        intervals.AppendLine(intervals_fmt (interval  )) |> ignore
 
-          sh_words .AppendLine(sprintf "<nihongoword>%s</nihongoword>" (line.Show)) |> ignore
-          in_words .AppendLine(sprintf "<word>%s</word>" (line.Input)) |> ignore
-          intervals.AppendLine(sprintf "<interval>%d</interval>" (interval)) |> ignore
-
-        let len = ls |> List.length
-
-        ("<saidaimondaisuu>" + (string len) + "</saidaimondaisuu>" + Environment.NewLine)
-        + (string sh_words)
-        + (string in_words)
-        + (string intervals)
+    let len = ls |> List.length
+    in
+      ( "<saidaimondaisuu>" + (string len) + "</saidaimondaisuu>"
+      + Environment.NewLine
+      + (string sh_words)
+      + (string in_words)
+      + (string intervals)
+      )
 
   let to_xml (data: MetaData) (lyrics: Lyrics) =
     let lyrics = lyrics |> Lyrics.to_interval
