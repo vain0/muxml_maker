@@ -93,12 +93,12 @@ module Parser =
       spaces >>. eof
 
     let p_half_lrc =
-      optional (attempt p_meta_line)
+      skipMany (attempt p_meta_line)
       >>. many p_time_tagged_line
       .>> p_eof
 
     let p_full_lrc =
-      optional (attempt p_meta_line)
+      skipMany (attempt p_meta_line)
       >>. many p_time_tagged_line_and_input_lyrics
       .>> p_eof
 
@@ -123,12 +123,12 @@ module Parser =
 
   let unparse_lrc_meta_header (meta: MetaData) =
     [
-      "@name=" + meta.Name        |> Some
-      "@music=" + meta.MusicPath  |> Some
-      meta.PicPath    |> Option.map ((+) "@pic=")
-      meta.VideoPath  |> Option.map ((+) "@video=")
-      meta.Artist     |> Option.map ((+) "@artist=")
-      meta.Genre      |> Option.map ((+) "@genre=")
+      "@name = "  + meta.Name       |> Some
+      "@music = " + meta.MusicPath  |> Some
+      meta.PicPath    |> Option.map ((+) "@pic = ")
+      meta.VideoPath  |> Option.map ((+) "@video = ")
+      meta.Artist     |> Option.map ((+) "@artist = ")
+      meta.Genre      |> Option.map ((+) "@genre = ")
     ]
     |> List.choose id
     |> Str.join Environment.NewLine
