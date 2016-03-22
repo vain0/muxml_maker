@@ -2,6 +2,7 @@
 
 open System
 open System.Text
+open System.Xml
 
 [<AutoOpen>]
 module XmlGen =
@@ -53,6 +54,7 @@ module XmlGen =
     ( "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n"
     + "<musicXML>\n"
     + "<musicname>" + data.Name + "</musicname>\n"
+    + (data.MusicPath |> sprintf "<music src=\"%s\" />")
     + (data.VideoPath |> enclose_or_empty "<video src=\"" "\" scalemode=\"fullwidth\" />\n")
     + (data.PicPath   |> enclose_or_empty "<background id=\"" "\" />\n")
     + (data.Artist    |> enclose_or_empty "<argist>" "</artist>\n")
@@ -60,3 +62,84 @@ module XmlGen =
     + (lyrics         |> xml_from_lyrics)
     + "</musicXML>\n"
     )
+
+  let rec xml_text_from_lrc_text =
+    function
+    | HalfLyricsText lrc_text ->
+        lrc_text
+        |> InputLyrics.run
+        |> (fun (LyricsText contents) -> contents |> xml_text_from_lrc_text)
+
+    | FullLyricsText lrc_text ->
+        match lrc_text |> Parser.parse_full_lrc with
+        | Parser.MyFailure err -> failwith err
+        | Parser.MySuccess (lyr, meta) ->
+            let intervals = lyr |> Lyrics.to_interval |> WithInterval
+            in to_xml meta intervals
+
+    | Invalid -> failwith "Invalid lrc text."
+
+  let lyrics_from_xml (xml: XmlNode): IntervalList<_> =
+    let len     =
+      xml.SelectSingleNode("saidaimondaisuu").InnerText
+      |> int
+    let sh_words    = xml.SelectNodes("nihongoword")
+    let in_words    = xml.SelectNodes("word")
+    let intervals   = xml.SelectNodes("interval")
+    in
+      [
+        for i in 0..(len - 1) do
+          let line =
+            {
+              Show    = sh_words.[i].InnerText
+              Input   = in_words.[i].InnerText
+            }
+          let interval =
+            intervals.[i].InnerText |> int |> Interval
+          yield
+            if line = LyricsLine.Empty
+            then (None, interval)
+            else (Some line, interval)
+        ]
+
+  let try_parse_xml (xml: XmlDocument) =
+    try
+      let xml = xml.SelectSingleNode("musicXML")
+      let getTextElem tagName =
+        xml
+        |> Xml.trySelectFirst tagName
+        |> Option.map (fun node -> node.InnerText)
+      let getAttr tagName attrName =
+        xml
+        |> Xml.trySelectFirst tagName
+        |> Option.map (fun node ->
+            let attr = node.Attributes.GetNamedItem(attrName)
+            in attr.InnerText
+            )
+
+      let lyrics =
+        xml |> lyrics_from_xml |> Lyrics.WithInterval
+      let meta =
+        {
+          Name        = xml.SelectSingleNode("musicname").InnerText
+          MusicPath   = getAttr "music"       "src" |> Option.get
+          PicPath     = getAttr "background"  "id"
+          VideoPath   = getAttr "video"       "src"
+          Artist      = getTextElem "artist"
+          Genre       = getTextElem "genre"
+        }
+      in
+        (meta, lyrics) |> Some
+    with
+    | _ -> None
+
+  let lrc_text_from_xml_text (xml_text: string) =
+    let xml =
+      Xml.XmlDocument()
+      |> tap (fun xml -> xml.LoadXml(xml_text))
+    in
+      match xml |> try_parse_xml with
+      | Some (meta, lrc) ->
+          let (LyricsText lrc_text) = Parser.unparse_full_lrc meta lrc
+          in lrc_text
+      | None -> failwith "failed"

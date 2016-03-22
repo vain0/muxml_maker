@@ -192,7 +192,7 @@ module InputLyrics =
         this |> Reader.read_all
         this |> Reader.try_build
 
-  let run contents =
+  let run (contents: LyricsText<unit>) =
       match contents |> Parser.parse_half_lrc with
       | Parser.MySuccess (lyr, _) ->
           let reader = Reader(lyr |> Lyrics.to_time_tagged)
@@ -206,5 +206,6 @@ module InputLyrics =
                   sb.AppendLine(sprintf "%s%s%s" (string l_tag) line.Show (string r_tag))
                     .AppendLine(line.Input) |> ignore
               string sb
+              |> Lyrics.of_string<string>
 
       | Parser.MyFailure msg -> failwith msg

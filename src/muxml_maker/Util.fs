@@ -1,11 +1,16 @@
 ﻿[<AutoOpen>]
 module Util
 
+open System
+open System.Xml
+
 [<AutoOpen>]
 module Trivial =
   let tap f x =
       do f x
       x
+
+  let flip f x y = f y x
 
 module Option =
   let if' b f =
@@ -30,3 +35,11 @@ module List =
       let prevs = front :: (xs |> dropLast |> List.map prev)
       let nexts = (xs |> List.tail |> List.map next) @ [back]
       List.zip3 xs prevs nexts
+
+[<RequireQualifiedAccess>]
+module Xml =
+  let trySelectFirst tagName (xml: XmlNode) =
+    let nodes = xml.SelectNodes(tagName)
+    if nodes.Count = 0
+    then None
+    else nodes.[0] |> Some

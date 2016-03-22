@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open Parser
 
 module Program =
 
@@ -11,12 +12,15 @@ module Program =
 
     match file_path |> Path.GetExtension with
     | ".lrc" ->
-        match Parser.parse_full_lrc contents with
-        | Parser.MySuccess (lyr, meta) ->
-            let intervals = lyr |> Lyrics.to_interval |> WithInterval
-            let xml = to_xml meta intervals
-            printfn "%s" xml
-        | Parser.MyFailure err -> failwith err
+        contents
+        |> xml_text_from_lrc_text
+        |> printfn "%s"
+
+    | ".xml" ->
+        contents
+        |> lrc_text_from_xml_text
+        |> printfn "%s"
+
     | ext ->
         failwithf "Unsupported extension: %s" ext
 
@@ -30,7 +34,12 @@ module Program =
             | [] -> Console.In.ReadToEnd()
             | file_path :: _ ->
                 File.ReadAllText(file_path)
-        printf "%s" (InputLyrics.run content)
+        let (LyricsText lrc_text) =
+          content
+          |> Lyrics.of_string<unit>
+          |> InputLyrics.run
+        in
+          printf "%s" lrc_text
     | [input_file_path] ->
         dispatch input_file_path
     | _ ->

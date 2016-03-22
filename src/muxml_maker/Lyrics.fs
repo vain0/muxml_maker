@@ -6,6 +6,10 @@ module Lyrics =
   let margin_threshold = 300
   let margin_ratio = (5, 1)
 
+  /// Wrap lrc string in LyricsText
+  let of_string<'TInput> (content: string): LyricsText<'TInput> =
+    LyricsText content
+
   // タイムタグつきリスト ttl の、各要素に前後のタグの時刻を付加したリスト
   /// opt: Some or id
   let with_prev_next_tags opt ttl =
@@ -75,4 +79,15 @@ module Lyrics =
   let to_time_tagged = function
     | WithTimeTag ttl -> ttl
     | WithInterval self ->
-        failwith "Unimplemented"
+        self
+        |> List.fold (fun (acc, total) (line_opt, Interval interval) ->
+            let total' = total + interval
+            let acc' =
+              match line_opt with
+              | None -> acc  // not emit gap line
+              | Some line -> (line, TimeTag total, TimeTag total') :: acc
+            in
+              (acc', total')
+            ) ([], 0)
+        |> fst
+        |> List.rev

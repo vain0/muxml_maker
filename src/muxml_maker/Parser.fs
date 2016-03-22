@@ -1,5 +1,7 @@
 ﻿namespace Muxml
 
+open System
+open Basis.Core
 open FParsec
 
 module Parser =
@@ -98,17 +100,85 @@ module Parser =
         >>. many p_time_tagged_line_and_input_lyrics
         .>> p_eof
         
-  /// .lrc (with time tags, w/o input lyrics)
-  let parse_half_lrc contents =
+  let parse_half_lrc_impl contents =
       runParserOnString
         (LrcParser.p_half_lrc) (LrcParser.init_state)
         "lrc-half parser" (contents + "\n")
+
+  /// .lrc (with time tags, w/o input lyrics)
+  let parse_half_lrc (LyricsText contents: LyricsText<unit>) =
+      parse_half_lrc_impl contents
       |> LrcParser.run_result
 
   /// .lrc (with time tags and input lyrics)
-  let parse_full_lrc contents =
+  let parse_full_lrc (LyricsText contents: LyricsText<string>) =
       let result =
           runParserOnString
             (LrcParser.p_full_lrc) (LrcParser.init_state)
             "lrc-full parser" (contents + "\n")
       result |> LrcParser.run_result
+
+  let unparse_lrc_meta_header (meta: MetaData) =
+    [
+      "@name=" + meta.Name        |> Some
+      "@music=" + meta.MusicPath  |> Some
+      meta.PicPath    |> Option.map ((+) "@pic=")
+      meta.VideoPath  |> Option.map ((+) "@video=")
+      meta.Artist     |> Option.map ((+) "@artist=")
+      meta.Genre      |> Option.map ((+) "@genre=")
+    ]
+    |> List.choose id
+    |> Str.join Environment.NewLine
+
+  let unparse_half_lrc meta (lrc: UnreadableLyrics) =
+      lrc
+      |> Lyrics.to_time_tagged
+      |> List.fold (fun acc (line, TimeTag l_tag, TimeTag r_tag) ->
+          (string l_tag + line + string r_tag) :: acc
+          ) []
+      |> List.rev
+      |> Str.join Environment.NewLine
+      |> (+) (unparse_lrc_meta_header meta)
+      |> Lyrics.of_string<unit>
+
+  let unparse_full_lrc meta (lrc: Lyrics) =
+      lrc
+      |> Lyrics.to_time_tagged
+      |> List.fold (fun acc (line, l_tag, r_tag) ->
+          let { Show = show; Input = input } = line
+          in
+            input :: (string l_tag + show + string r_tag) :: acc
+          ) []
+      |> List.rev
+      |> Str.join Environment.NewLine
+      |> (+) (unparse_lrc_meta_header meta)
+      |> Lyrics.of_string<string>
+
+[<AutoOpen>]
+module LyricsExtension =
+  /// .lrc テキストの判別
+  /// 偶数行にタイムタグがあり、奇数行にない場合、full テキストらしさが高いと判定する。
+  let (|HalfLyricsText|FullLyricsText|Invalid|) contents =
+    match Parser.parse_half_lrc_impl contents with
+    | Success (ottl, state, pos) ->
+        let ind =
+          function
+          | Some _ -> 1
+          | None -> 0
+        let prob =
+          ottl
+          |> List.mapi (fun i (line, l_tag, r_tag) ->
+              if i % 2 = 0
+              then      ind l_tag  +      ind r_tag
+              else (1 - ind l_tag) + (1 - ind r_tag)
+              |> float
+              )
+          |> List.sum
+          |> flip (/) (ottl |> List.length |> (*) 2 |> float)
+        in
+          if prob > 0.7
+          then FullLyricsText (contents |> Lyrics.of_string<string>)
+          else HalfLyricsText (contents |> Lyrics.of_string<unit  >)
+
+    | Failure _ ->
+        Invalid

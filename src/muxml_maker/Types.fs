@@ -2,6 +2,13 @@
 
 [<AutoOpen>]
 module Types =
+  /// 歌詞テキスト
+  /// タイムタグは基本的についているものとする。
+  /// half (読み歌詞なし) は 'TInput = unit 、
+  /// full (読み歌詞あり) は 'TInput = string 。
+  type LyricsText<'TInput> =
+    | LyricsText of string
+
   type LyricsLine = {
       // 表示歌詞
       Show:  string
