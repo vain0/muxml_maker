@@ -63,12 +63,12 @@ module XmlGen =
     + "</musicXML>\n"
     )
 
-  let rec xml_from_lrc_text =
+  let rec xml_text_from_lrc_text =
     function
     | HalfLyricsText lrc_text ->
         lrc_text
         |> InputLyrics.run
-        |> (fun (LyricsText contents) -> contents |> xml_from_lrc_text)
+        |> (fun (LyricsText contents) -> contents |> xml_text_from_lrc_text)
 
     | FullLyricsText lrc_text ->
         match lrc_text |> Parser.parse_full_lrc with
@@ -132,3 +132,14 @@ module XmlGen =
         (meta, lyrics) |> Some
     with
     | _ -> None
+
+  let lrc_text_from_xml_text (xml_text: string) =
+    let xml =
+      Xml.XmlDocument()
+      |> tap (fun xml -> xml.LoadXml(xml_text))
+    in
+      match xml |> try_parse_xml with
+      | Some (meta, lrc) ->
+          let (LyricsText lrc_text) = Parser.unparse_full_lrc meta lrc
+          in lrc_text
+      | None -> failwith "failed"

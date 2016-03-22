@@ -12,19 +12,15 @@ module Program =
 
     match file_path |> Path.GetExtension with
     | ".lrc" ->
-        let xml = contents |> xml_from_lrc_text
-        in
-          printfn "%s" xml
+        contents
+        |> xml_text_from_lrc_text
+        |> printfn "%s"
+
     | ".xml" ->
-        let xml =
-          Xml.XmlDocument()
-          |> tap (fun xml -> xml.LoadXml(contents))
-        in
-          match try_parse_xml xml with
-          | Some (meta, lrc) ->
-              let (LyricsText lrc_text) = Parser.unparse_full_lrc meta lrc
-              printfn "%s" lrc_text
-          | None -> failwith "failed"
+        contents
+        |> lrc_text_from_xml_text
+        |> printfn "%s"
+
     | ext ->
         failwithf "Unsupported extension: %s" ext
 
