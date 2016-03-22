@@ -1,13 +1,16 @@
 ﻿namespace Muxml
 
 open System
+open System.Security
 open System.Text
 open System.Xml
 
 [<AutoOpen>]
 module XmlGen =
   // config
-  let xml_offset = 200 // >= 0
+  let xml_offset =
+    config.XmlOffset
+    |> tap (fun n -> assert (n >= 0))
 
   let xml_from_lyrics (ls: IntervalList<_>) =
         let sh_words    = StringBuilder()
@@ -43,10 +46,6 @@ module XmlGen =
         + (string intervals)
 
   let to_xml (data: MetaData) (lyrics: Lyrics) =
-    let enclose_or_empty l r = function
-      | Some s -> l + s + r
-      | None -> ""
-
     let lyrics = lyrics |> Lyrics.to_interval
 
     //let kpm_elem = "<kpm>" + ModelKPM.ToString("f2") + "</kpm>"
@@ -63,6 +62,14 @@ module XmlGen =
     + "</musicXML>\n"
     )
 
+  let music_info_text_from_meta (meta: MetaData) =
+    ( "<musicinfo>\n"
+    + "  <musicname>" + SecurityElement.Escape(meta.Name) + "</musicname>\n"
+    + (meta.Artist  |> enclose_or_empty "  <artist>" "</artist>\n")
+    + (meta.Genre   |> enclose_or_empty "  <genre>"  "</genre>\n")
+    + "</musicinfo>\n"
+    )
+
   let rec xml_text_from_lrc_text =
     function
     | HalfLyricsText lrc_text ->
@@ -75,7 +82,7 @@ module XmlGen =
         | Parser.MyFailure err -> failwith err
         | Parser.MySuccess (lyr, meta) ->
             let intervals = lyr |> Lyrics.to_interval |> WithInterval
-            in to_xml meta intervals
+            in (to_xml meta intervals, meta)
 
     | Invalid -> failwith "Invalid lrc text."
 
@@ -141,5 +148,5 @@ module XmlGen =
       match xml |> try_parse_xml with
       | Some (meta, lrc) ->
           let (LyricsText lrc_text) = Parser.unparse_full_lrc meta lrc
-          in lrc_text
+          in (lrc_text, meta)
       | None -> failwith "failed"

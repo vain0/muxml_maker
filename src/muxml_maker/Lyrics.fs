@@ -2,9 +2,11 @@
 
 [<AutoOpen>]
 module Lyrics =
-  // config
-  let margin_threshold = 300
-  let margin_ratio = (5, 1)
+  let margin_threshold =
+    config.MarginThreshold
+
+  let margin_ratio =
+    (config.MarginRatio.Prev, config.MarginRatio.Next)
 
   /// Wrap lrc string in LyricsText
   let of_string<'TInput> (content: string): LyricsText<'TInput> =

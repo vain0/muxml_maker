@@ -3,3 +3,4 @@ NUGET
   specs:
     Basis.Core (1.1.3)
     FParsec (1.0.2)
+    FSharp.Configuration (0.5.12)
