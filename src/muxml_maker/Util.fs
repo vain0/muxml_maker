@@ -10,6 +10,8 @@ module Trivial =
       do f x
       x
 
+  let flip f x y = f y x
+
 module Option =
   let if' b f =
       if b then Some (f ()) else None

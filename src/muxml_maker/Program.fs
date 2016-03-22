@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open Parser
 
 module Program =
 
@@ -11,16 +12,9 @@ module Program =
 
     match file_path |> Path.GetExtension with
     | ".lrc" ->
-        match
-          contents
-          |> Lyrics.of_string<string, TimeTag>
-          |> Parser.parse_full_lrc
-          with
-        | Parser.MySuccess (lyr, meta) ->
-            let intervals = lyr |> Lyrics.to_interval |> WithInterval
-            let xml = to_xml meta intervals
-            printfn "%s" xml
-        | Parser.MyFailure err -> failwith err
+        let xml = contents |> xml_from_lrc_text
+        in
+          printfn "%s" xml
     | ".xml" ->
         let xml =
           Xml.XmlDocument()

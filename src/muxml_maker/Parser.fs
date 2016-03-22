@@ -100,11 +100,14 @@ module Parser =
         >>. many p_time_tagged_line_and_input_lyrics
         .>> p_eof
         
-  /// .lrc (with time tags, w/o input lyrics)
-  let parse_half_lrc (LyricsText contents: LyricsText<unit, 'TTag>) =
+  let parse_half_lrc_impl contents =
       runParserOnString
         (LrcParser.p_half_lrc) (LrcParser.init_state)
         "lrc-half parser" (contents + "\n")
+
+  /// .lrc (with time tags, w/o input lyrics)
+  let parse_half_lrc (LyricsText contents: LyricsText<unit, 'TTag>) =
+      parse_half_lrc_impl contents
       |> LrcParser.run_result
 
   /// .lrc (with time tags and input lyrics)
@@ -150,3 +153,32 @@ module Parser =
       |> Str.join Environment.NewLine
       |> (+) (unparse_lrc_meta_header meta)
       |> Lyrics.of_string<string, TimeTag>
+
+[<AutoOpen>]
+module LyricsExtension =
+  /// .lrc テキストの判別
+  /// 偶数行にタイムタグがあり、奇数行にない場合、full テキストらしさが高いと判定する。
+  let (|HalfLyricsText|FullLyricsText|Invalid|) contents =
+    match Parser.parse_half_lrc_impl contents with
+    | Success (ottl, state, pos) ->
+        let ind =
+          function
+          | Some _ -> 1
+          | None -> 0
+        let prob =
+          ottl
+          |> List.mapi (fun i (line, l_tag, r_tag) ->
+              if i % 2 = 0
+              then      ind l_tag  +      ind r_tag
+              else (1 - ind l_tag) + (1 - ind r_tag)
+              |> float
+              )
+          |> List.sum
+          |> flip (/) (ottl |> List.length |> (*) 2 |> float)
+        in
+          if prob > 0.7
+          then FullLyricsText (contents |> Lyrics.of_string<string, TimeTag>)
+          else HalfLyricsText (contents |> Lyrics.of_string<unit  , TimeTag>)
+
+    | Failure _ ->
+        Invalid

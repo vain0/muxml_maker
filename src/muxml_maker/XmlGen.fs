@@ -63,6 +63,22 @@ module XmlGen =
     + "</musicXML>\n"
     )
 
+  let rec xml_from_lrc_text =
+    function
+    | HalfLyricsText lrc_text ->
+        lrc_text
+        |> InputLyrics.run
+        |> (fun (LyricsText contents) -> contents |> xml_from_lrc_text)
+
+    | FullLyricsText lrc_text ->
+        match lrc_text |> Parser.parse_full_lrc with
+        | Parser.MyFailure err -> failwith err
+        | Parser.MySuccess (lyr, meta) ->
+            let intervals = lyr |> Lyrics.to_interval |> WithInterval
+            in to_xml meta intervals
+
+    | Invalid -> failwith "Invalid lrc text."
+
   let lyrics_from_xml (xml: XmlNode): IntervalList<_> =
     let len     =
       xml.SelectSingleNode("saidaimondaisuu").InnerText
