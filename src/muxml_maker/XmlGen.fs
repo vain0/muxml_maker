@@ -45,10 +45,6 @@ module XmlGen =
         + (string intervals)
 
   let to_xml (data: MetaData) (lyrics: Lyrics) =
-    let enclose_or_empty l r = function
-      | Some s -> l + s + r
-      | None -> ""
-
     let lyrics = lyrics |> Lyrics.to_interval
 
     //let kpm_elem = "<kpm>" + ModelKPM.ToString("f2") + "</kpm>"
