@@ -4,6 +4,7 @@ open System
 open System.Text
 open System.IO
 open Basis.Core
+open MuxmlMaker
 
 module InputLyrics =
   type Command<'a> =

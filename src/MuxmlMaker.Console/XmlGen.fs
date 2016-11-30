@@ -4,6 +4,7 @@ open System
 open System.Security
 open System.Text
 open System.Xml
+open MuxmlMaker
 
 [<AutoOpen>]
 module XmlGen =

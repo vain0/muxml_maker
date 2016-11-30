@@ -1,4 +1,4 @@
-﻿namespace MuxmlMaker.Console
+﻿namespace MuxmlMaker
 
 [<AutoOpen>]
 module Lyrics =

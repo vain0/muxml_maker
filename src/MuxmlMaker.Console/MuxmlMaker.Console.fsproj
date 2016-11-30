@@ -62,12 +62,6 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Utility.fs" />
-    <Compile Include="Types.fs" />
-    <Compile Include="Settings.fs" />
-    <Compile Include="Dict.fs" />
-    <Compile Include="Lyrics.fs" />
-    <Compile Include="Parser.fs" />
     <Compile Include="InputLyrics.fs" />
     <Compile Include="XmlGen.fs" />
     <Compile Include="Program.fs" />

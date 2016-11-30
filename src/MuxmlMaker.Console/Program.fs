@@ -3,7 +3,8 @@
 open System
 open System.IO
 open Basis.Core
-open Parser
+open MuxmlMaker
+open MuxmlMaker.Parser
 
 module Program =
 
