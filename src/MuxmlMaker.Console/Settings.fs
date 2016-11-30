@@ -6,7 +6,7 @@ open FSharp.Configuration
 
 [<AutoOpen>]
 module Settings =
-  type Config = YamlConfig<"muxml_maker.yaml">
+  type Config = YamlConfig<"MuxmlMaker.yaml">
   let config = Config()
 
   let storage_path =
