@@ -14,36 +14,41 @@ module Parser =
 
     let initialState = Map.empty
 
-    let runState cfg =
+    let runState cfg: MetaData =
       let name =
         match cfg |> Map.tryFind "name" with
         | Some name -> name
         | None -> ""
-      in
-        {
-          MetaData.Name = name
-          MusicPath   =
-            match cfg |> Map.tryFind "music" with
-            | Some path -> path
-            | None -> name + ".mp3"
-          PicPath     = cfg |> Map.tryFind "pic"
-          VideoPath   = cfg |> Map.tryFind "video"
-          Artist      = cfg |> Map.tryFind "artist"
-          Genre       = cfg |> Map.tryFind "genre"
-        }
+      {
+        Name =
+          name
+        MusicPath =
+          match cfg |> Map.tryFind "music" with
+          | Some path -> path
+          | None -> name + ".mp3"
+        PicPath =
+          cfg |> Map.tryFind "pic"
+        VideoPath =
+          cfg |> Map.tryFind "video"
+        Artist =
+          cfg |> Map.tryFind "artist"
+        Genre =
+          cfg |> Map.tryFind "genre"
+      }
 
     let inline runResult pr =
       match pr with
       | ParserResult.Success (xs, state, pos) ->
-          try
-            let ttl = tryCompleteTimeTags xs
-            MySuccess (ttl |> WithTimeTag, runState state)
-          with
-          | e -> MyFailure e.Message
+        try
+          let ttl = tryCompleteTimeTags xs
+          MySuccess (ttl |> WithTimeTag, runState state)
+        with
+        | e -> MyFailure e.Message
       | ParserResult.Failure (msg, error, state) ->
-          MyFailure msg
+        MyFailure msg
 
-    type Parser<'a> = Parser<'a, LrcConfig>
+    type Parser<'a> =
+      Parser<'a, LrcConfig>
 
     let skip p = p >>% ()
     
@@ -67,8 +72,7 @@ module Parser =
       let body =
         pipe3 (pint32 .>> skipChar ':') (pint32 .>> skipChar ':') pint32
           (fun min sec ms10 -> TimeTag <| ((((min * 60) + sec) * 100) + ms10) * 10)
-      in
-        between (skipChar '[') (skipChar ']') body
+      between (skipChar '[') (skipChar ']') body
 
     let pLTag = opt (attempt pTimeTag)
     let pRTag = opt (attempt pTimeTag) .>> pNewLine
@@ -86,8 +90,8 @@ module Parser =
         pTimeTaggedLine
         pOneLine
         (fun (show, lTag, rTag) input ->
-            ({ Show = show; Input = input }, lTag, rTag)
-            )
+          ({ Show = show; Input = input }, lTag, rTag)
+        )
 
     let pEof =
       spaces >>. eof
@@ -104,7 +108,8 @@ module Parser =
 
   let parseHalfLyricsImpl contents =
     runParserOnString
-      (LrcParser.pHalfLyrics) (LrcParser.initialState)
+      LrcParser.pHalfLyrics
+      LrcParser.initialState
       "lrc-half parser" (contents + "\n")
 
   /// .lrc (with time tags, w/o input lyrics)
@@ -118,8 +123,7 @@ module Parser =
       runParserOnString
         (LrcParser.pFullLyrics) (LrcParser.initialState)
         "lrc-full parser" (contents + "\n")
-    in
-      result |> LrcParser.runResult
+    result |> LrcParser.runResult
 
   let unparseLyricsMetadata (meta: MetaData) =
     [
@@ -136,9 +140,10 @@ module Parser =
   let unparseHalfLyrics meta (lrc: UnreadableLyrics) =
     lrc
     |> Lyrics.toTimeTagged
-    |> List.fold (fun acc (line, TimeTag lTag, TimeTag rTag) ->
+    |> List.fold
+      (fun acc (line, TimeTag lTag, TimeTag rTag) ->
         (string lTag + line + string rTag) :: acc
-        ) []
+      ) []
     |> List.rev
     |> Str.join Environment.NewLine
     |> (+) (unparseLyricsMetadata meta)
@@ -147,11 +152,11 @@ module Parser =
   let unparseFullLyrics meta (lrc: Lyrics) =
     lrc
     |> Lyrics.toTimeTagged
-    |> List.fold (fun acc (line, lTag, rTag) ->
+    |> List.fold
+      (fun acc (line, lTag, rTag) ->
         let { Show = show; Input = input } = line
-        in
-          input :: (string lTag + show + string rTag) :: acc
-        ) []
+        input :: (string lTag + show + string rTag) :: acc
+      ) []
     |> List.rev
     |> Str.join Environment.NewLine
     |> (+) (unparseLyricsMetadata meta)
@@ -164,24 +169,24 @@ module LyricsExtension =
   let (|HalfLyricsText|FullLyricsText|Invalid|) contents =
     match Parser.parseHalfLyricsImpl contents with
     | Success (ottl, state, pos) ->
-        let indicator =
-          function
-          | Some _ -> 1
-          | None -> 0
-        let prob =
-          ottl
-          |> List.mapi (fun i (line, lTag, rTag) ->
-              if i % 2 = 0
+      let indicator =
+        function
+        | Some _ -> 1
+        | None -> 0
+      let prob =
+        ottl
+        |> List.mapi
+          (fun i (line, lTag, rTag) ->
+            if i % 2 = 0
               then      indicator lTag  +      indicator rTag
               else (1 - indicator lTag) + (1 - indicator rTag)
-              |> float
-              )
-          |> List.sum
-          |> flip (/) (ottl |> List.length |> (*) 2 |> float)
-        in
-          if prob > 0.7
-          then FullLyricsText (contents |> Lyrics.ofString<string>)
-          else HalfLyricsText (contents |> Lyrics.ofString<unit  >)
+            |> float
+          )
+        |> List.sum
+        |> flip (/) (ottl |> List.length |> (*) 2 |> float)
+      if prob > 0.7
+        then FullLyricsText (contents |> Lyrics.ofString<string>)
+        else HalfLyricsText (contents |> Lyrics.ofString<unit  >)
 
     | Failure _ ->
         Invalid

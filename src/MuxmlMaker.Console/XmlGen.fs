@@ -23,10 +23,10 @@ module XmlGen =
     let ls =
       match ls with
       | (None, Interval firstInterval) :: lsTail ->
-          (None, Interval (xmlOffset + firstInterval)) :: lsTail
+        (None, Interval (xmlOffset + firstInterval)) :: lsTail
       | (Some _, _) :: tail
         when xmlOffset > 0 ->
-          (None, Interval xmlOffset) :: ls
+        (None, Interval xmlOffset) :: ls
       | _ -> ls
 
     for (line, Interval interval) in ls do
@@ -34,22 +34,23 @@ module XmlGen =
         match line with
         | Some line -> line
         | None -> LyricsLine.Empty
-      let showWordsFormat    = sprintf "<nihongoword>%s</nihongoword>"
-      let inputWordsFormat    = sprintf "<word>%s</word>"
-      let intervalsFormat   = sprintf "<interval>%d</interval>" 
-      do
-        showWords .AppendLine(showWordsFormat  (line.Show )) |> ignore
-        inputWords .AppendLine(inputWordsFormat  (line.Input)) |> ignore
-        intervals.AppendLine(intervalsFormat (interval  )) |> ignore
+      let showWordsFormat =
+        sprintf "<nihongoword>%s</nihongoword>"
+      let inputWordsFormat =
+        sprintf "<word>%s</word>"
+      let intervalsFormat =
+        sprintf "<interval>%d</interval>" 
+      showWords.AppendLine(showWordsFormat line.Show) |> ignore
+      inputWords.AppendLine(inputWordsFormat line.Input) |> ignore
+      intervals.AppendLine(intervalsFormat interval) |> ignore
 
     let len = ls |> List.length
-    in
-      ( "<saidaimondaisuu>" + (string len) + "</saidaimondaisuu>"
-      + Environment.NewLine
-      + (string showWords)
-      + (string inputWords)
-      + (string intervals)
-      )
+    ( "<saidaimondaisuu>" + (string len) + "</saidaimondaisuu>"
+    + Environment.NewLine
+    + (string showWords)
+    + (string inputWords)
+    + (string intervals)
+    )
 
   let toXml (data: MetaData) (lyrics: Lyrics) =
     let lyrics = lyrics |> Lyrics.toInterval
@@ -79,41 +80,43 @@ module XmlGen =
   let rec xmlTextFromLyricsText =
     function
     | HalfLyricsText lyricsText ->
-        lyricsText
-        |> InputLyrics.run
-        |> (fun (LyricsText contents) -> contents |> xmlTextFromLyricsText)
-
+      lyricsText
+      |> InputLyrics.run
+      |> (fun (LyricsText contents) -> contents |> xmlTextFromLyricsText)
     | FullLyricsText lyricsText ->
-        match lyricsText |> Parser.parseFullLyrics with
-        | Parser.MyFailure err -> failwith err
-        | Parser.MySuccess (lyr, meta) ->
-            let intervals = lyr |> Lyrics.toInterval |> WithInterval
-            in (toXml meta intervals, meta)
-
+      match lyricsText |> Parser.parseFullLyrics with
+      | Parser.MyFailure err -> failwith err
+      | Parser.MySuccess (lyr, meta) ->
+        let intervals = lyr |> Lyrics.toInterval |> WithInterval
+        (toXml meta intervals, meta)
     | Invalid -> failwith "Invalid lrc text."
 
   let lyricsFromXml (xml: XmlNode): IntervalList<_> =
-    let len     =
+    let len =
       xml.SelectSingleNode("saidaimondaisuu").InnerText
       |> int
-    let showWords    = xml.SelectNodes("nihongoword")
-    let inputWords    = xml.SelectNodes("word")
-    let intervals   = xml.SelectNodes("interval")
-    in
-      [
-        for i in 0..(len - 1) do
-          let line =
-            {
-              Show    = showWords.[i].InnerText
-              Input   = inputWords.[i].InnerText
-            }
-          let interval =
-            intervals.[i].InnerText |> int |> Interval
-          yield
-            if line = LyricsLine.Empty
+    let showWords =
+      xml.SelectNodes("nihongoword")
+    let inputWords =
+      xml.SelectNodes("word")
+    let intervals =
+      xml.SelectNodes("interval")
+    [
+      for i in 0..(len - 1) do
+        let line =
+          {
+            Show =
+              showWords.[i].InnerText
+            Input =
+              inputWords.[i].InnerText
+          }
+        let interval =
+          intervals.[i].InnerText |> int |> Interval
+        yield
+          if line = LyricsLine.Empty
             then (None, interval)
             else (Some line, interval)
-        ]
+      ]
 
   let tryParseXml (xml: XmlDocument) =
     try
@@ -125,21 +128,28 @@ module XmlGen =
       let getAttr tagName attrName =
         xml
         |> Xml.trySelectFirst tagName
-        |> Option.map (fun node ->
+        |> Option.map
+          (fun node ->
             let attr = node.Attributes.GetNamedItem(attrName)
-            in attr.InnerText
-            )
+            attr.InnerText
+          )
 
       let lyrics =
         xml |> lyricsFromXml |> Lyrics.WithInterval
       let meta =
         {
-          Name        = xml.SelectSingleNode("musicname").InnerText
-          MusicPath   = getAttr "music"       "src" |> Option.get
-          PicPath     = getAttr "background"  "id"
-          VideoPath   = getAttr "video"       "src"
-          Artist      = getTextElem "artist"
-          Genre       = getTextElem "genre"
+          Name =
+            xml.SelectSingleNode("musicname").InnerText
+          MusicPath =
+            getAttr "music"       "src" |> Option.get
+          PicPath =
+            getAttr "background"  "id"
+          VideoPath =
+            getAttr "video"       "src"
+          Artist =
+            getTextElem "artist"
+          Genre =
+            getTextElem "genre"
         }
       in
         (meta, lyrics) |> Some
@@ -150,9 +160,8 @@ module XmlGen =
     let xml =
       Xml.XmlDocument()
       |> tap (fun xml -> xml.LoadXml(xmlText))
-    in
-      match xml |> tryParseXml with
-      | Some (meta, lrc) ->
-          let (LyricsText lyricsText) = Parser.unparseFullLyrics meta lrc
-          in (lyricsText, meta)
-      | None -> failwith "failed"
+    match xml |> tryParseXml with
+    | Some (meta, lrc) ->
+      let (LyricsText lyricsText) = Parser.unparseFullLyrics meta lrc
+      (lyricsText, meta)
+    | None -> failwith "failed"

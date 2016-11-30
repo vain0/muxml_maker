@@ -6,24 +6,29 @@ open System.Xml
 [<AutoOpen>]
 module Trivial =
   let tap f x =
-    do f x
+    f x
     x
 
-  let flip f x y = f y x
+  let flip f x y =
+    f y x
 
-  let encloseOrEmpty l r = function
+  let encloseOrEmpty l r =
+    function
     | Some s -> l + s + r
     | None -> ""
 
 module Option =
   let if' b f =
-    if b then Some (f ()) else None
+    if b
+      then () |> f |> Some
+      else None
 
   let filter pred self =
     self |> Option.bind (fun it -> if' (pred it) (fun () -> it))
 
 module List =
-  let rec dropLast = function
+  let rec dropLast =
+    function
     | [] | [_] -> []
     | x :: xs -> x :: dropLast xs
 
@@ -38,5 +43,5 @@ module Xml =
   let trySelectFirst tagName (xml: XmlNode) =
     let nodes = xml.SelectNodes(tagName)
     if nodes.Count = 0
-    then None
-    else nodes.[0] |> Some
+      then None
+      else nodes.[0] |> Some

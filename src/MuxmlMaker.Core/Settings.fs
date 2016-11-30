@@ -12,5 +12,5 @@ module Settings =
   let storagePath =
     let path = config.StoragePath
     if path |> Directory.Exists
-    then Some path
-    else None
+      then Some path
+      else None
