@@ -1,4 +1,4 @@
-﻿namespace Muxml
+﻿namespace MuxmlMaker.Console
 
 open System
 open Basis.Core

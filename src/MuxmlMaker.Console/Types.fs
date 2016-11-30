@@ -1,4 +1,4 @@
-﻿namespace Muxml
+﻿namespace MuxmlMaker.Console
 
 [<AutoOpen>]
 module Types =

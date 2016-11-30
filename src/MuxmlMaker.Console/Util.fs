@@ -1,5 +1,4 @@
-﻿[<AutoOpen>]
-module Util
+﻿namespace MuxmlMaker.Console
 
 open System
 open System.Xml
