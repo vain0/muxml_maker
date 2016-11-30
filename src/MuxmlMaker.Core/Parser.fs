@@ -12,9 +12,9 @@ module Parser =
   module LrcParser =
     type LrcConfig = Map<string, string>
 
-    let init_state = Map.empty
+    let initialState = Map.empty
 
-    let run_state cfg =
+    let runState cfg =
       let name =
         match cfg |> Map.tryFind "name" with
         | Some name -> name
@@ -32,12 +32,12 @@ module Parser =
           Genre       = cfg |> Map.tryFind "genre"
         }
 
-    let inline run_result pr =
+    let inline runResult pr =
       match pr with
       | ParserResult.Success (xs, state, pos) ->
           try
-            let ttl = try_complete_time_tags xs
-            MySuccess (ttl |> WithTimeTag, run_state state)
+            let ttl = tryCompleteTimeTags xs
+            MySuccess (ttl |> WithTimeTag, runState state)
           with
           | e -> MyFailure e.Message
       | ParserResult.Failure (msg, error, state) ->
@@ -48,7 +48,7 @@ module Parser =
     let skip p = p >>% ()
     
     // ``@ key = value`` adds config to (key: value) pair
-    let p_meta_line: Parser<_> =
+    let pMetaLine: Parser<_> =
       parse {
         do! skipChar '@' .>> spaces
         let! key    = many1Chars asciiLetter
@@ -57,71 +57,71 @@ module Parser =
         do! updateUserState (Map.add key value)
       }
 
-    let p_newline: Parser<_> =
-      skipNewline >>. many (attempt p_meta_line <|> skipNewline)
+    let pNewLine: Parser<_> =
+      skipNewline >>. many (attempt pMetaLine <|> skipNewline)
 
-    let p_one_line =
-      restOfLine false .>> p_newline
+    let pOneLine =
+      restOfLine false .>> pNewLine
 
-    let p_time_tag: Parser<_> =
+    let pTimeTag: Parser<_> =
       let body =
         pipe3 (pint32 .>> skipChar ':') (pint32 .>> skipChar ':') pint32
           (fun min sec ms10 -> TimeTag <| ((((min * 60) + sec) * 100) + ms10) * 10)
       in
         between (skipChar '[') (skipChar ']') body
 
-    let p_l_tag = opt (attempt p_time_tag)
-    let p_r_tag = opt (attempt p_time_tag) .>> p_newline
+    let pLTag = opt (attempt pTimeTag)
+    let pRTag = opt (attempt pTimeTag) .>> pNewLine
 
-    let p_time_tagged_line =
+    let pTimeTaggedLine =
       parse {
-        let! l_tag = p_l_tag
-        let! line  = manyCharsTill anyChar (followedBy (attempt (skip p_time_tag) <|> skipNewline))
-        let! r_tag = p_r_tag
-        return (line, l_tag, r_tag)
+        let! lTag = pLTag
+        let! line  = manyCharsTill anyChar (followedBy (attempt (skip pTimeTag) <|> skipNewline))
+        let! rTag = pRTag
+        return (line, lTag, rTag)
       }
 
-    let p_time_tagged_line_and_input_lyrics: Parser<_> =
+    let pTimeTaggedLineAndInputLyrics: Parser<_> =
       pipe2
-        p_time_tagged_line
-        p_one_line
-        (fun (show, l_tag, r_tag) input ->
-            ({ Show = show; Input = input }, l_tag, r_tag)
+        pTimeTaggedLine
+        pOneLine
+        (fun (show, lTag, rTag) input ->
+            ({ Show = show; Input = input }, lTag, rTag)
             )
 
-    let p_eof =
+    let pEof =
       spaces >>. eof
 
-    let p_half_lrc =
-      skipMany (attempt p_meta_line)
-      >>. many p_time_tagged_line
-      .>> p_eof
+    let pHalfLyrics =
+      skipMany (attempt pMetaLine)
+      >>. many pTimeTaggedLine
+      .>> pEof
 
-    let p_full_lrc =
-      skipMany (attempt p_meta_line)
-      >>. many p_time_tagged_line_and_input_lyrics
-      .>> p_eof
+    let pFullLyrics =
+      skipMany (attempt pMetaLine)
+      >>. many pTimeTaggedLineAndInputLyrics
+      .>> pEof
 
-  let parse_half_lrc_impl contents =
+  let parseHalfLyricsImpl contents =
     runParserOnString
-      (LrcParser.p_half_lrc) (LrcParser.init_state)
+      (LrcParser.pHalfLyrics) (LrcParser.initialState)
       "lrc-half parser" (contents + "\n")
 
   /// .lrc (with time tags, w/o input lyrics)
-  let parse_half_lrc (LyricsText contents: LyricsText<unit>) =
-    parse_half_lrc_impl contents
-    |> LrcParser.run_result
+  let parseHalfLyrics (LyricsText contents: LyricsText<unit>) =
+    parseHalfLyricsImpl contents
+    |> LrcParser.runResult
 
   /// .lrc (with time tags and input lyrics)
-  let parse_full_lrc (LyricsText contents: LyricsText<string>) =
+  let parseFullLyrics (LyricsText contents: LyricsText<string>) =
     let result =
       runParserOnString
-        (LrcParser.p_full_lrc) (LrcParser.init_state)
+        (LrcParser.pFullLyrics) (LrcParser.initialState)
         "lrc-full parser" (contents + "\n")
     in
-      result |> LrcParser.run_result
+      result |> LrcParser.runResult
 
-  let unparse_lrc_meta_header (meta: MetaData) =
+  let unparseLyricsMetadata (meta: MetaData) =
     [
       "@name = "  + meta.Name       |> Some
       "@music = " + meta.MusicPath  |> Some
@@ -133,55 +133,55 @@ module Parser =
     |> List.choose id
     |> Str.join Environment.NewLine
 
-  let unparse_half_lrc meta (lrc: UnreadableLyrics) =
+  let unparseHalfLyrics meta (lrc: UnreadableLyrics) =
     lrc
-    |> Lyrics.to_time_tagged
-    |> List.fold (fun acc (line, TimeTag l_tag, TimeTag r_tag) ->
-        (string l_tag + line + string r_tag) :: acc
+    |> Lyrics.toTimeTagged
+    |> List.fold (fun acc (line, TimeTag lTag, TimeTag rTag) ->
+        (string lTag + line + string rTag) :: acc
         ) []
     |> List.rev
     |> Str.join Environment.NewLine
-    |> (+) (unparse_lrc_meta_header meta)
-    |> Lyrics.of_string<unit>
+    |> (+) (unparseLyricsMetadata meta)
+    |> Lyrics.ofString<unit>
 
-  let unparse_full_lrc meta (lrc: Lyrics) =
+  let unparseFullLyrics meta (lrc: Lyrics) =
     lrc
-    |> Lyrics.to_time_tagged
-    |> List.fold (fun acc (line, l_tag, r_tag) ->
+    |> Lyrics.toTimeTagged
+    |> List.fold (fun acc (line, lTag, rTag) ->
         let { Show = show; Input = input } = line
         in
-          input :: (string l_tag + show + string r_tag) :: acc
+          input :: (string lTag + show + string rTag) :: acc
         ) []
     |> List.rev
     |> Str.join Environment.NewLine
-    |> (+) (unparse_lrc_meta_header meta)
-    |> Lyrics.of_string<string>
+    |> (+) (unparseLyricsMetadata meta)
+    |> Lyrics.ofString<string>
 
 [<AutoOpen>]
 module LyricsExtension =
   /// .lrc テキストの判別
   /// 偶数行にタイムタグがあり、奇数行にない場合、full テキストらしさが高いと判定する。
   let (|HalfLyricsText|FullLyricsText|Invalid|) contents =
-    match Parser.parse_half_lrc_impl contents with
+    match Parser.parseHalfLyricsImpl contents with
     | Success (ottl, state, pos) ->
-        let ind =
+        let indicator =
           function
           | Some _ -> 1
           | None -> 0
         let prob =
           ottl
-          |> List.mapi (fun i (line, l_tag, r_tag) ->
+          |> List.mapi (fun i (line, lTag, rTag) ->
               if i % 2 = 0
-              then      ind l_tag  +      ind r_tag
-              else (1 - ind l_tag) + (1 - ind r_tag)
+              then      indicator lTag  +      indicator rTag
+              else (1 - indicator lTag) + (1 - indicator rTag)
               |> float
               )
           |> List.sum
           |> flip (/) (ottl |> List.length |> (*) 2 |> float)
         in
           if prob > 0.7
-          then FullLyricsText (contents |> Lyrics.of_string<string>)
-          else HalfLyricsText (contents |> Lyrics.of_string<unit  >)
+          then FullLyricsText (contents |> Lyrics.ofString<string>)
+          else HalfLyricsText (contents |> Lyrics.ofString<unit  >)
 
     | Failure _ ->
         Invalid

@@ -11,7 +11,7 @@ module Trivial =
 
   let flip f x y = f y x
 
-  let enclose_or_empty l r = function
+  let encloseOrEmpty l r = function
     | Some s -> l + s + r
     | None -> ""
 

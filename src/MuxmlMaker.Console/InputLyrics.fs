@@ -39,32 +39,32 @@ module InputLyrics =
       |> Option.getOr (this.CommandMap |> Map.find '?')
       |> (fun cmd -> cmd.Func)
 
-  type Reader (lyr_: TimeTaggedList<string>) =
-    let shows_ =
-      lyr_ |> List.map (fun (show, _, _) -> show) |> Array.ofList
+  type Reader (lyrics: TimeTaggedList<string>) =
+    let shows =
+      lyrics |> List.map (fun (show, _, _) -> show) |> Array.ofList
 
-    let len_ = shows_.Length
+    let length = shows.Length
 
-    let inputs_ =
-      Array.create len_ None
+    let inputs =
+      Array.create length None
 
-    let mutable index_ = 0
+    let mutable index = 0
 
   with
-    member this.Lyrics  = lyr_
-    member this.Shows   = shows_
-    member this.Inputs  = inputs_
-    member this.Index   = index_
-    member this.Length  = len_
+    member this.Lyrics  = lyrics
+    member this.Shows   = shows
+    member this.Inputs  = inputs
+    member this.Index   = index
+    member this.Length  = length
 
-    member this.MoveToIfAble(new_index) =
-      if 0 <= new_index && new_index < len_
-      then index_ <- new_index
+    member this.MoveToIfAble(newIndex) =
+      if 0 <= newIndex && newIndex < length
+      then index <- newIndex
 
-    static member move_to_if_able new_index (this: Reader) =
-      this.MoveToIfAble(new_index)
+    static member MoveToIfAbleImpl newIndex (this: Reader) =
+      this.MoveToIfAble(newIndex)
 
-    static member try_move_to_unreadable_line ixs (this: Reader) =
+    static member TryMoveToUnreadableLine ixs (this: Reader) =
       ixs
       |> Seq.tryFind (fun i ->
           0 <= i && i < this.Length
@@ -75,7 +75,7 @@ module InputLyrics =
           | None -> false
           )
 
-    static member try_build (this: Reader) =
+    static member TryBuild (this: Reader) =
       Option.if' (this.Inputs |> Array.forall (Option.isSome)) (fun () ->
         (this.Lyrics, (this.Shows |> List.ofArray), (this.Inputs |> List.ofArray))
         |||> List.zip3
@@ -85,7 +85,7 @@ module InputLyrics =
             )
         )
 
-    static member edit_current_line (this: Reader) =
+    static member EditCurrentLine (this: Reader) =
       let (orig, _, _) = this.Lyrics.[this.Index]
       do
         printfn "%s" "Input new line. (Empty or \"@\" to pass)"
@@ -101,13 +101,13 @@ module InputLyrics =
       
       true
 
-    static member command_map =
+    static member CommandMap =
       {
         Description = "Input how to type for each line."
         CommandMap =
           [ { Char = '?'
               Manu = "Show this usage"
-              Func = (fun _ -> printfn "%s" (Reader.command_map.Usage()); true)
+              Func = (fun _ -> printfn "%s" (Reader.CommandMap.Usage()); true)
               }
             { Char = 'q'
               Manu = "Quit (no save)"
@@ -128,7 +128,7 @@ module InputLyrics =
               Manu = "Back to previous unreadable line"
               Func = (fun (this: Reader) ->
                   let ixs = [(this.Index - 1) .. -1 .. 0]
-                  if this |> Reader.try_move_to_unreadable_line ixs |> not
+                  if this |> Reader.TryMoveToUnreadableLine ixs |> not
                   then printfn "%s" "Not found."
                   true)
               }
@@ -136,32 +136,32 @@ module InputLyrics =
               Manu = "Skip to next unreadable line"
               Func = (fun (this: Reader) ->
                   let ixs = [(this.Index + 1) .. (this.Length - 1)]
-                  if this |> Reader.try_move_to_unreadable_line ixs |> not
+                  if this |> Reader.TryMoveToUnreadableLine ixs |> not
                   then printfn "%s" "Not found."
                   true)
               }
             { Char = 'n'
               Manu = "Edit current line"
-              Func = Reader.edit_current_line
+              Func = Reader.EditCurrentLine
               }
           ]
           |> List.map (fun cmd -> (cmd.Char, cmd))
           |> Map.ofList
       }
 
-    static member show_usage() =
-      printfn "%s" (Reader.command_map.Usage())
+    static member ShowUsage() =
+      printfn "%s" (Reader.CommandMap.Usage())
 
-    static member proc_command ch this =
-      this |> Reader.command_map.Trigger(ch)
+    static member ProcessCommand ch this =
+      this |> Reader.CommandMap.Trigger(ch)
 
-    static member show_current_line (this: Reader) =
+    static member ShowCurrentLine (this: Reader) =
       printfn "#%3d %s" (this.Index) (this.Shows.[this.Index])
 
       this.Inputs.[this.Index]
       |> Option.iter (fun s -> printfn "#CUR %s" s)
 
-    static member read_all (this: Reader) =
+    static member ReadAll (this: Reader) =
       let (|Command|Input|) line =
         if line |> Str.isNullOrEmpty || line = ":" then
           Command '?'
@@ -171,11 +171,11 @@ module InputLyrics =
           Input line
 
       let rec loop () =
-        this |> Reader.show_current_line
+        this |> Reader.ShowCurrentLine
 
         match Console.ReadLine() with
         | Command ch ->
-            if this |> Reader.proc_command ch
+            if this |> Reader.ProcessCommand ch
             then loop ()
 
         | Input line ->
@@ -185,7 +185,7 @@ module InputLyrics =
               this.MoveToIfAble (this.Index + 1)
               loop ()
             else
-              if this |> Reader.try_move_to_unreadable_line [0..(this.Length - 1)]
+              if this |> Reader.TryMoveToUnreadableLine [0..(this.Length - 1)]
               then loop ()
               else
                 // TODO: 一覧を出力して、本当に完了するか聞く
@@ -193,24 +193,24 @@ module InputLyrics =
       loop ()
 
     member this.Run() =
-      Reader.show_usage()
-      this |> Reader.read_all
-      this |> Reader.try_build
+      Reader.ShowUsage()
+      this |> Reader.ReadAll
+      this |> Reader.TryBuild
 
   let run (contents: LyricsText<unit>) =
-    match contents |> Parser.parse_half_lrc with
+    match contents |> Parser.parseHalfLyrics with
     | Parser.MySuccess (lyr, _) ->
-        let reader = Reader(lyr |> Lyrics.to_time_tagged)
+        let reader = Reader(lyr |> Lyrics.toTimeTagged)
         match reader.Run() with
         | None ->
             failwith "Incomplete"
         | Some lyr ->
             // TODO: メタデータを付加すべき
             let sb = StringBuilder()
-            for (line, l_tag, r_tag) in lyr do
-              sb.AppendLine(sprintf "%s%s%s" (string l_tag) line.Show (string r_tag))
+            for (line, lTag, rTag) in lyr do
+              sb.AppendLine(sprintf "%s%s%s" (string lTag) line.Show (string rTag))
                 .AppendLine(line.Input) |> ignore
             string sb
-            |> Lyrics.of_string<string>
+            |> Lyrics.ofString<string>
 
     | Parser.MyFailure msg -> failwith msg

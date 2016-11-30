@@ -9,7 +9,7 @@ module Settings =
   type Config = YamlConfig<"MuxmlMaker.yaml">
   let config = Config()
 
-  let storage_path =
+  let storagePath =
     let path = config.StoragePath
     if path |> Directory.Exists
     then Some path
