@@ -61,7 +61,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Util.fs" />
+    <Compile Include="Utility.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="Settings.fs" />
     <Compile Include="Dict.fs" />
