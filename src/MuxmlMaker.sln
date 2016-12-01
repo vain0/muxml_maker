@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MuxmlMaker.Console", "MuxmlMaker.Console\MuxmlMaker.Console.fsproj", "{1B89EDB5-C6BA-46F9-825D-9F4656AA4D13}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MuxmlMaker.Core", "MuxmlMaker.Core\MuxmlMaker.Core.fsproj", "{A0A168A7-B3F4-4949-8796-225AF6C51CB1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1B89EDB5-C6BA-46F9-825D-9F4656AA4D13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B89EDB5-C6BA-46F9-825D-9F4656AA4D13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B89EDB5-C6BA-46F9-825D-9F4656AA4D13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B89EDB5-C6BA-46F9-825D-9F4656AA4D13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0A168A7-B3F4-4949-8796-225AF6C51CB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0A168A7-B3F4-4949-8796-225AF6C51CB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0A168A7-B3F4-4949-8796-225AF6C51CB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0A168A7-B3F4-4949-8796-225AF6C51CB1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

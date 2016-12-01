@@ -1,8 +1,8 @@
-# muxml_maker
+# MuxmlMaker
 [TypeingMania 5](http://www.sightseekerstudio.com/typingmania) や [IshoTyping](https://sites.google.com/site/ishotyping) で使用できる音楽 XML ファイルの作成をサポートするツール。
 
 ## 初期設定
-* muxml_maker.yaml の ``StoragePath: ``の行に、出力ファイルを保存するためのディレクトリを書く。
+* MuxmlMaker.yaml の ``StoragePath: ``の行に、出力ファイルを保存するためのディレクトリを書く。
   * このディレクトリの下に、 `info`, `lrc`, `xml` という名前のディレクトリを作っておく。
   * 記述例:
 
@@ -26,13 +26,13 @@ StoragePath: D:/IshoTyping/storage
 ...
 ```
 
-* muxml_maker があるフォルダのコンソールを起動して、以下のコマンドを打つ。
+* MuxmlMaker があるフォルダのコンソールを起動して、以下のコマンドを打つ。
 
 ```
-muxml_maker 歌詞ファイルのパス
+MuxmlMaker 歌詞ファイルのパス
 ```
 
-* muxml_maker が起動し、「読み入力モード」になる。
+* MuxmlMaker が起動し、「読み入力モード」になる。
   * 歌詞が1行ごとに表示されるので、読み仮名を入力していく。
 * 読み入力が完了したら、StoragePath 直下の `info`, `lrc`, `xml` ディレクトリに、結果のファイルが出力される。
 
