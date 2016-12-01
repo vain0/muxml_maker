@@ -40,7 +40,7 @@ module Parser =
       match pr with
       | ParserResult.Success (xs, state, pos) ->
         try
-          let ttl = tryCompleteTimeTags xs
+          let ttl = Lyrics.tryCompleteTimeTags xs
           MySuccess (ttl |> WithTimeTag, runState state)
         with
         | e -> MyFailure e.Message

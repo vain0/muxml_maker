@@ -1,6 +1,5 @@
 ﻿namespace MuxmlMaker
 
-[<AutoOpen>]
 module Lyrics =
   let marginThreshold =
     config.MarginThreshold
