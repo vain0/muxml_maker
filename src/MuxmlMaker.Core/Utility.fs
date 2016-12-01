@@ -1,8 +1,5 @@
 ﻿namespace MuxmlMaker
 
-open System
-open System.Xml
-
 [<AutoOpen>]
 module Trivial =
   let tap f x =
@@ -40,6 +37,8 @@ module List =
 
 [<RequireQualifiedAccess>]
 module Xml =
+  open System.Xml
+
   let trySelectFirst tagName (xml: XmlNode) =
     let nodes = xml.SelectNodes(tagName)
     if nodes.Count = 0
