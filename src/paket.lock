@@ -3,3 +3,5 @@ NUGET
     Basis.Core (1.1.3)
     FParsec (1.0.2)
     FSharp.Configuration (0.5.12)
+    Persimmon (1.2)
+    Persimmon.Console (1.2)
