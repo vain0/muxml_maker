@@ -7,6 +7,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MuxmlMaker.Console", "Muxml
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MuxmlMaker.Core", "MuxmlMaker.Core\MuxmlMaker.Core.fsproj", "{A0A168A7-B3F4-4949-8796-225AF6C51CB1}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MuxmlMaker.UnitTest", "MuxmlMaker.UnitTest\MuxmlMaker.UnitTest.fsproj", "{3B04AE20-8DC6-453A-8EBE-FCCE19235F61}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{A0A168A7-B3F4-4949-8796-225AF6C51CB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0A168A7-B3F4-4949-8796-225AF6C51CB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0A168A7-B3F4-4949-8796-225AF6C51CB1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B04AE20-8DC6-453A-8EBE-FCCE19235F61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B04AE20-8DC6-453A-8EBE-FCCE19235F61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B04AE20-8DC6-453A-8EBE-FCCE19235F61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B04AE20-8DC6-453A-8EBE-FCCE19235F61}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
