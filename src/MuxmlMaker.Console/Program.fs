@@ -26,15 +26,15 @@ module Program =
     match filePath |> Path.GetExtension with
     | ".lrc" ->
       let (xmlText, meta) =
-        contents |> xmlTextFromLyricsText
+        contents |> XmlGen.xmlTextFromLyricsText
       let musicInfoText =
-        meta |> musicInfoTextFromMetadata
+        meta |> XmlGen.musicInfoTextFromMetadata
       saveFileInStorage "lrc"  ".lrc" meta.Name contents
       saveFileInStorage "xml"  ".xml" meta.Name xmlText
       saveFileInStorage "info" ".txt" meta.Name musicInfoText
     | ".xml" ->
       contents
-      |> lyricsTextFromXmlText |> fst
+      |> XmlGen.lyricsTextFromXmlText |> fst
       |> printfn "%s"
     | ext ->
       failwithf "Unsupported extension: %s" ext

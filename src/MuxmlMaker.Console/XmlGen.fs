@@ -6,7 +6,6 @@ open System.Text
 open System.Xml
 open MuxmlMaker
 
-[<AutoOpen>]
 module XmlGen =
   // config
   let xmlOffset =
