@@ -71,7 +71,7 @@ module Types =
   type UnreadableLyrics =
     LyricsRepr<string>
 
-  type Lyrics =
+  type ReadableLyrics =
     LyricsRepr<LyricsLine>
 
   type MetaData =

@@ -149,7 +149,7 @@ module Parser =
     |> (+) (unparseLyricsMetadata meta)
     |> Lyrics.ofString<unit>
 
-  let unparseFullLyrics meta (lrc: Lyrics) =
+  let unparseFullLyrics meta (lrc: ReadableLyrics) =
     lrc
     |> Lyrics.toTimeTagged
     |> List.fold

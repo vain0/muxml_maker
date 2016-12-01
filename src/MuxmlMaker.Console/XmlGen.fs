@@ -51,7 +51,7 @@ module XmlGen =
     + (string intervals)
     )
 
-  let toXml (data: MetaData) (lyrics: Lyrics) =
+  let toXml (data: MetaData) (lyrics: ReadableLyrics) =
     let lyrics = lyrics |> Lyrics.toInterval
 
     //let kpmElem = "<kpm>" + ModelKPM.ToString("f2") + "</kpm>"
@@ -134,7 +134,7 @@ module XmlGen =
           )
 
       let lyrics =
-        xml |> lyricsFromXml |> Lyrics.WithInterval
+        xml |> lyricsFromXml |> ReadableLyrics.WithInterval
       let meta =
         {
           Name =
